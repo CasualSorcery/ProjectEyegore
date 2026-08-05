@@ -39,6 +39,7 @@ pub struct Entity {
 impl Entity {
     pub fn new_prop(x: f64, y: f64, texture: usize) -> Self {
         Self {
+            // create new prop entity
             pos: CartesianPos { x, y },
             texture,
             scale_x: 1.0,
@@ -48,6 +49,7 @@ impl Entity {
     }
     pub fn new_enemy(x: f64, y: f64, texture: usize, hp: f32, speed: f64) -> Self {
         Self {
+            // create new enemy entity
             pos: CartesianPos { x, y },
             texture,
             scale_x: 1.0,
@@ -60,6 +62,7 @@ impl Entity {
         }
     }
     pub fn new_pickup(x: f64, y: f64, texture: usize, effect: EffectType, amount: i32) -> Self {
+        // create new pickup entity
         Self {
             pos: CartesianPos { x, y },
             texture,
@@ -75,8 +78,8 @@ impl Entity {
         map: &[u8],
         map_width: usize,
     ) {
+        // handle entity behavior
         match &mut self.entity_type {
-            // <-- Updated to entity_type
             EntityType::Prop => {}
 
             EntityType::Pickup {
@@ -85,7 +88,7 @@ impl Entity {
             } => {}
 
             EntityType::Enemy { hp, state, speed } => {
-                // If HP drops below 0 and not dead, die
+                // if HP drops below 0 and not dead, die
                 if *hp <= 0.0 && !matches!(state, EnemyState::Dead) {
                     *state = EnemyState::Dead;
                     self.texture = 8; // dead body texture
