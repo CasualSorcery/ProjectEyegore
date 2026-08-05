@@ -21,7 +21,7 @@ pub struct Level {
     pub entities: Vec<Entity>,
 }
 pub fn load_config(filepath: &str) -> GameConfig {
-    // Tries to read the ron file
+    // tries to read the ron file
     let file_content = std::fs::read_to_string(filepath)
         .expect("Failed to read file");
     // tries to serialize the ron file into the GameConfig Struct
