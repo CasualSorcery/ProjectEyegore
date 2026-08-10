@@ -32,8 +32,16 @@ impl Engine {
             let mut map_x = self.player.position.x as usize;
             let mut map_y = self.player.position.y as usize;
 
-            let delta_dist_x = if ray_dir_x == 0.0 { 1e30 } else { (1.0 / ray_dir_x).abs() };
-            let delta_dist_y = if ray_dir_y == 0.0 { 1e30 } else { (1.0 / ray_dir_y).abs() };
+            let delta_dist_x: f64 = if ray_dir_x == 0.0 {
+                1e30
+            } else {
+                (1.0 / ray_dir_x).abs()
+            };
+            let delta_dist_y: f64 = if ray_dir_y == 0.0 {
+                1e30
+            } else {
+                (1.0 / ray_dir_y).abs()
+            };
 
             let mut side_dist_x: f64;
             let mut side_dist_y: f64;
@@ -93,16 +101,24 @@ impl Engine {
             let line_height = (scr_h as f64 / perp_wall_dist) as isize;
 
             let mut draw_start = -line_height / 2 + scr_h as isize / 2;
-            if draw_start < 0 { draw_start = 0; }
+            if draw_start < 0 {
+                draw_start = 0;
+            }
 
             let mut draw_end = line_height / 2 + scr_h as isize / 2;
-            if draw_end >= scr_h as isize { draw_end = scr_h as isize - 1; }
+            if draw_end >= scr_h as isize {
+                draw_end = scr_h as isize - 1;
+            }
 
             // step 6 - texturing calculations
             let tile_id = self.get_tile(map_x, map_y);
 
             // safety check - if tile_id is 0, default to 0
-            let tex_num = if tile_id > 0 { (tile_id - 1) as usize } else { 0 };
+            let tex_num = if tile_id > 0 {
+                (tile_id - 1) as usize
+            } else {
+                0
+            };
 
             // calculate exact hit coordinate
             let mut wall_x = if side == 0 {
@@ -116,8 +132,12 @@ impl Engine {
             let mut tex_x = (wall_x * (tex_w as f64)) as usize;
 
             // flip texture horizontally based on side
-            if side == 0 && ray_dir_x > 0.0 { tex_x = tex_w - tex_x - 1; }
-            if side == 1 && ray_dir_y < 0.0 { tex_x = tex_w - tex_x - 1; }
+            if side == 0 && ray_dir_x > 0.0 {
+                tex_x = tex_w - tex_x - 1;
+            }
+            if side == 1 && ray_dir_y < 0.0 {
+                tex_x = tex_w - tex_x - 1;
+            }
 
             // texture stepping
             let step = 1.0 * (tex_h as f64) / (line_height as f64);
@@ -226,7 +246,8 @@ impl Engine {
         let level = &self.config.levels[self.current_level_idx];
 
         // step 1 - Sort sprites by distance (furthest to nearest)
-        let mut sprite_order: Vec<(usize, f64)> = level.entities
+        let mut sprite_order: Vec<(usize, f64)> = level
+            .entities
             .iter()
             .enumerate()
             .map(|(i, entity)| {
@@ -241,7 +262,9 @@ impl Engine {
         sprite_order.sort_by(|a, b| b.1.total_cmp(&a.1));
 
         // step 2 - calculate the inverse camera matrix
-        let inv_det = 1.0 / (self.player.plane.x * self.player.direction.y - self.player.direction.x * self.player.plane.y);
+        let inv_det = 1.0
+            / (self.player.plane.x * self.player.direction.y
+                - self.player.direction.x * self.player.plane.y);
 
         // step 3 - draw each sprite
         for (index, _dist) in sprite_order {
@@ -252,50 +275,80 @@ impl Engine {
             let sprite_y = entity.pos.y - self.player.position.y;
 
             // transform sprite with the inverse camera matrix
-            let transform_x = inv_det * (self.player.direction.y * sprite_x - self.player.direction.x * sprite_y);
-            let transform_y = inv_det * (-self.player.plane.y * sprite_x + self.player.plane.x * sprite_y); // Depth (Z)
+            let transform_x =
+                inv_det * (self.player.direction.y * sprite_x - self.player.direction.x * sprite_y);
+            let transform_y =
+                inv_det * (-self.player.plane.y * sprite_x + self.player.plane.x * sprite_y); // Depth (Z)
 
-            let sprite_screen_x = ((scr_w as f64 / 2.0) * (1.0 + transform_x / transform_y)) as isize;
+            let sprite_screen_x =
+                ((scr_w as f64 / 2.0) * (1.0 + transform_x / transform_y)) as isize;
 
             // calculate height of the sprite
             let sprite_height = ((scr_h as f64 / transform_y.abs()) * entity.scale_y) as isize;
 
             let mut draw_start_y = -sprite_height / 2 + scr_h as isize / 2;
-            if draw_start_y < 0 { draw_start_y = 0; }
+            if draw_start_y < 0 {
+                draw_start_y = 0;
+            }
             let mut draw_end_y = sprite_height / 2 + scr_h as isize / 2;
-            if draw_end_y >= scr_h as isize { draw_end_y = scr_h as isize - 1; }
+            if draw_end_y >= scr_h as isize {
+                draw_end_y = scr_h as isize - 1;
+            }
 
             // calculate width of the sprite
             let sprite_width = ((scr_h as f64 / transform_y.abs()) * entity.scale_x) as isize;
 
             let mut draw_start_x = -sprite_width / 2 + sprite_screen_x;
-            if draw_start_x < 0 { draw_start_x = 0; }
+            if draw_start_x < 0 {
+                draw_start_x = 0;
+            }
             let mut draw_end_x = sprite_width / 2 + sprite_screen_x;
-            if draw_end_x >= scr_w as isize { draw_end_x = scr_w as isize - 1; }
+            if draw_end_x >= scr_w as isize {
+                draw_end_x = scr_w as isize - 1;
+            }
 
             // step 4 - render the vertical stripes
             for stripe in draw_start_x..draw_end_x {
-                let mut tex_x = (256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * tex_w / sprite_width) / 256;
+                let mut tex_x = (256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * tex_w
+                    / sprite_width)
+                    / 256;
 
                 // clamp tex_x
-                if tex_x < 0 { tex_x = 0; }
-                if tex_x >= tex_w { tex_x = tex_w - 1; }
+                if tex_x < 0 {
+                    tex_x = 0;
+                }
+                if tex_x >= tex_w {
+                    tex_x = tex_w - 1;
+                }
 
                 let stripe_usize = stripe as usize;
 
                 // Z-BUFFER CHECK
-                if transform_y > 0.0 && stripe > 0 && stripe < scr_w as isize && transform_y < self.z_buffer[stripe_usize] {
+                if transform_y > 0.0
+                    && stripe > 0
+                    && stripe < scr_w as isize
+                    && transform_y < self.z_buffer[stripe_usize]
+                {
                     for y in draw_start_y..draw_end_y {
                         let d = y * 256 - scr_h as isize * 128 + sprite_height * 128;
                         let mut tex_y = ((d * tex_h) / sprite_height) / 256;
 
                         // clamp tex_y
-                        if tex_y < 0 { tex_y = 0; }
-                        if tex_y >= tex_h { tex_y = tex_h - 1; }
+                        if tex_y < 0 {
+                            tex_y = 0;
+                        }
+                        if tex_y >= tex_h {
+                            tex_y = tex_h - 1;
+                        }
 
                         // safety check: ensure the texture exists
-                        let tex_idx = if entity.texture < self.textures.len() { entity.texture } else { 0 };
-                        let color = self.textures[tex_idx][(tex_h as usize) * (tex_y as usize) + (tex_x as usize)];
+                        let tex_idx = if entity.texture < self.textures.len() {
+                            entity.texture
+                        } else {
+                            0
+                        };
+                        let color = self.textures[tex_idx]
+                            [(tex_h as usize) * (tex_y as usize) + (tex_x as usize)];
 
                         // mask out pure black pixels (transparency)
                         if (color & 0x00FFFFFF) != 0 {
@@ -312,23 +365,6 @@ impl Engine {
         let index = x * level.map_width + y;
 
         *level.map.get(index).unwrap_or(&1)
-    }
-    pub fn change_level(&mut self, new_level_idx: usize) {
-        // prevent crashing if player beat the last level
-        if new_level_idx >= self.config.levels.len() {
-            return;
-        }
-
-        self.current_level_idx = new_level_idx;
-
-        self.textures.clear();
-
-        for tx_path in &self.config.levels[self.current_level_idx].textures {
-            self.textures.push(load_texture(tx_path));
-        }
-
-        self.player.position.x = self.config.levels[self.current_level_idx].player_start_x;
-        self.player.position.y = self.config.levels[self.current_level_idx].player_start_y;
     }
     fn handle_input(&mut self, frame_time: f64) {
         // set the rate of the movement
@@ -371,7 +407,8 @@ impl Engine {
             let sin_rot = (-rotation_step).sin();
 
             let old_dir_x = self.player.direction.x;
-            self.player.direction.x = self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
+            self.player.direction.x =
+                self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
             self.player.direction.y = old_dir_x * sin_rot + self.player.direction.y * cos_rot;
 
             let old_plane_x = self.player.plane.x;
@@ -385,7 +422,8 @@ impl Engine {
             let sin_rot = rotation_step.sin();
 
             let old_dir_x = self.player.direction.x;
-            self.player.direction.x = self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
+            self.player.direction.x =
+                self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
             self.player.direction.y = old_dir_x * sin_rot + self.player.direction.y * cos_rot;
 
             let old_plane_x = self.player.plane.x;
@@ -410,6 +448,23 @@ impl Engine {
             entity.update(&player_pos, frame_time, map_slice, map_width);
         }
     }
+    pub fn change_level(&mut self, new_level_idx: usize) {
+        // prevent crashing if player beat the last level
+        if new_level_idx >= self.config.levels.len() {
+            return;
+        }
+
+        self.current_level_idx = new_level_idx;
+
+        self.textures.clear();
+
+        for tx_path in &self.config.levels[self.current_level_idx].textures {
+            self.textures.push(load_texture(tx_path));
+        }
+
+        self.player.position.x = self.config.levels[self.current_level_idx].player_start_x;
+        self.player.position.y = self.config.levels[self.current_level_idx].player_start_y;
+    }
     pub fn new(filepath: &str) -> Self {
         let config = load_config(filepath);
 
@@ -431,18 +486,14 @@ impl Engine {
 
         let z_buffer_size = config.scr_width;
 
-        // TODO: refactor this to the new standard
-        let starting_player = Player {
-            position: CartesianPos {
+        let starting_player = Player::new(
+            CartesianPos {
                 x: config.levels[0].player_start_x,
                 y: config.levels[0].player_start_y,
             },
-            direction: CartesianPos { x: -1.0, y: 0.0 },
-            plane: CartesianPos { x: 0.0, y: 0.66 },
-            move_speed: 5.0,
-            rotation_speed: 3.0,
-        };
-
+            CartesianPos { x: -1.0, y: 0.0 },
+            CartesianPos { x: 0.0, y: 0.66 },
+        );
         Self {
             config,
             window,
@@ -479,10 +530,8 @@ impl Engine {
             self.render_sprites();
 
             // finally, update the window
-            self.window.update_with_buffer(
-                &self.buffer,
-                self.config.scr_width,
-                self.config.scr_height)
+            self.window
+                .update_with_buffer(&self.buffer, self.config.scr_width, self.config.scr_height)
                 .unwrap();
         }
     }
@@ -491,15 +540,11 @@ impl Engine {
 // loads/parses a single 64x64 png texture, returns the texture u32 vector
 fn load_texture(filepath: &str) -> Vec<u32> {
     // tries to open the image file (png only), panics if can't
-    let img: DynamicImage = image::open(filepath).unwrap_or_else(|e| {
-        panic!("Failed to open image {}: {}", filepath, e)
-    });
+    let img: DynamicImage = image::open(filepath)
+        .unwrap_or_else(|e| panic!("Failed to open image {}: {}", filepath, e));
 
     // ensures 64x64 pixel size
-    let img: DynamicImage = img.resize_exact(
-        64, 64,
-        image::imageops::FilterType::Nearest,
-    );
+    let img: DynamicImage = img.resize_exact(64, 64, image::imageops::FilterType::Nearest);
 
     // transforms the images to rgba format
     let rgba_image: RgbaImage = img.to_rgba8();
@@ -530,7 +575,9 @@ fn create_window(options: &GameConfig, window_options: WindowOptions) -> Window 
         options.scr_width,
         options.scr_height,
         window_options,
-    ).unwrap_or_else(|e| {  // "work or panic" basically
+    )
+    .unwrap_or_else(|e| {
+        // "work or panic" basically
         panic!("Failed to create window: {}", e);
     });
 
