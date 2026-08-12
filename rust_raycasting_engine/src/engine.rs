@@ -359,6 +359,53 @@ impl Engine {
             }
         }
     }
+    fn draw_text(&mut self, text: &str, start_x: usize, start_y: usize, scale: usize) {
+        let mut current_x = start_x;
+
+        for ch in text.chars() {
+            if let Some(bitmap) = font8x8::BASIC_FONTS.get(ch) {
+                for (row_idx, row_byte) in bitmap.iter().enumerate() {
+                    for bit_idx in 0..8 {
+                        if (*row_byte >> bit_idx) & 1 == 1 {
+                            for sy in 0..scale {
+                                for sx in 0..scale {
+                                    let pixel_x = current_x + (bit_idx * scale) + sx;
+                                    let pixel_y = start_y + (row_idx * scale) + sy;
+
+                                    if pixel_x < self.config.scr_width
+                                        && pixel_y < self.config.scr_height
+                                    {
+                                        let index = pixel_y * self.config.scr_width + pixel_x;
+                                        self.buffer[index] = 0x00FFFFFF
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                current_x += 8 * scale + scale;
+            }
+        }
+    }
+    fn render_debug_overlay(&mut self, frame_time: f64) {
+        let fps_str = format!("FPS: {:0}", 1.0 / frame_time);
+        let pos_str = format!(
+            "POS: X:{:.1} Y:{:.1}",
+            self.player.position.x, self.player.position.y
+        );
+        let hp_str = format!(
+            "HP: {:.0} ARMOR: {:.0}",
+            self.player.health, self.player.armor
+        );
+
+        self.draw_text(&fps_str, 10, 10, 2);
+        self.draw_text(&pos_str, 10, 30, 2);
+        self.draw_text(&hp_str, 10, 50, 2);
+
+        let center_x = self.config.scr_width / 2;
+        let center_y = self.config.scr_height / 2;
+        self.draw_text("+", center_x - 8, center_y - 8, 2);
+    }
     fn get_tile(&self, x: usize, y: usize) -> u8 {
         let level = &self.config.levels[self.current_level_idx];
 
