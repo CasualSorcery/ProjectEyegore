@@ -33,6 +33,8 @@ impl Inventory {
                             *existing_ammo += ammo;
                             return;
                         }
+                    } else {
+                        return;
                     }
                 }
                 // else just add the weapon to the inventory
@@ -91,7 +93,7 @@ pub struct Player {
     pub inventory: Inventory,
 }
 impl Player {
-    // TODO: maybe can add more parameters
+    // HINT: maybe can add more parameters
     pub fn new(position: CartesianPos, direction: CartesianPos, plane: CartesianPos) -> Player {
         Self {
             position,
