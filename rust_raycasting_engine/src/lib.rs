@@ -1,13 +1,14 @@
 mod config;
 mod engine;
-mod player;
-mod map;
 mod entity;
+mod input;
+mod map;
+mod player;
+mod utils;
 
 use crate::engine::Engine;
 
 pub fn run_game(config_path: &str) {
-
     // instantiate the engine
     let mut game_engine = Engine::new(config_path);
 
