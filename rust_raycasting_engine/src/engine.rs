@@ -1,21 +1,50 @@
 use crate::config::{load_config, GameConfig};
+use crate::input::InputState;
 use crate::map::CartesianPos;
 use crate::player::Player;
-use image::{DynamicImage, RgbaImage};
-use minifb::{Key, Window, WindowOptions};
+use crate::utils::{create_window, load_texture};
+use font8x8::UnicodeFonts;
+use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
+use std::fmt::Write;
 use std::time::Instant;
 
+// main engine struct
+
+/// Represents the entirety of the game's engine, wraps most of the other modules' methods
 pub struct Engine {
+    /// configuration struct
     config: GameConfig,
+    /// designated window
     window: Window,
+    /// pixel-by-pixel rendering buffer
     buffer: Vec<u32>,
     z_buffer: Vec<f64>,
+    /// Public debug mode option
+    pub show_debug: bool,
+    /// Current level
     pub current_level_idx: usize,
+    /// textures rendering buffer
     textures: Vec<Vec<u32>>,
+    /// player struct
     player: Player,
+    /// input handling struct
+    input: InputState,
+    /// Public pause game check
+    pub is_paused: bool,
+    /// sprite entitie buffer
+    sprite_buffer: Vec<(usize, f64)>,
+    /// multiuse debug string
+    debug_string: String,
 }
 impl Engine {
+    // -------------------------------------------------------
+    // main rendering functions
+    // -------------------------------------------------------
+
+    /// Renders the walls by making ray-casting calculations,
+    /// writes the result in the Engine's `buffer` and `z_buffer`.
     fn render_walls(&mut self) {
+        // screen size to render
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
 
@@ -23,6 +52,7 @@ impl Engine {
         let tex_w: usize = 64;
         let tex_h: usize = 64;
 
+        // main loop of wall ray-casting
         for x in 0..scr_w {
             // step 1 - calculate ray position and direction
             let camera_x = 2.0 * (x as f64) / (scr_w as f64) - 1.0;
@@ -167,6 +197,9 @@ impl Engine {
             }
         }
     }
+
+    /// Renders the floor and ceiling by making ray-casting calculations,
+    /// writes the result in the Engine's `buffer` and `z_buffer`.
     fn render_floor_ceiling(&mut self) {
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
@@ -216,7 +249,7 @@ impl Engine {
                 floor_x += floor_step_x;
                 floor_y += floor_step_y;
 
-                // TODO: hardcoded, make it dynamic
+                // TODO: hardcoded floor texture, make it dynamic
                 // draw floor (using texture 3: Greystone)
                 let mut floor_color = self.textures[3][tex_w * ty + tx];
 
@@ -225,7 +258,7 @@ impl Engine {
 
                 self.buffer[y * scr_w + x] = floor_color;
 
-                // TODO: hardcoded, make it dynamic
+                // TODO: hardcoded ceiling texture, make it dynamic
                 // draw ceiling (using texture 6: Wood)
                 let mut ceil_color = self.textures[6][tex_w * ty + tx];
                 ceil_color = (ceil_color >> 1) & 0x007F7F7F;
@@ -235,6 +268,9 @@ impl Engine {
             }
         }
     }
+
+    /// Renders the sprites by making ray-casting calculations,
+    /// writes the result in the Engine's `buffer`, `z_buffer` and `sprites_buffer`.
     fn render_sprites(&mut self) {
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
@@ -245,21 +281,18 @@ impl Engine {
 
         let level = &self.config.levels[self.current_level_idx];
 
+        self.sprite_buffer.clear();
+
         // step 1 - Sort sprites by distance (furthest to nearest)
-        let mut sprite_order: Vec<(usize, f64)> = level
-            .entities
-            .iter()
-            .enumerate()
-            .map(|(i, entity)| {
-                // Calculate Euclidean distance squared
-                let dist = (self.player.position.x - entity.pos.x).powi(2)
-                    + (self.player.position.y - entity.pos.y).powi(2);
-                (i, dist)
-            })
-            .collect();
+        for (i, entity) in level.entities.iter().enumerate() {
+            let dist = (self.player.position.x - entity.pos.x).powi(2)
+                + (self.player.position.y - entity.pos.y).powi(2);
+            self.sprite_buffer.push((i, dist));
+        }
 
         // sort descending
-        sprite_order.sort_by(|a, b| b.1.total_cmp(&a.1));
+        self.sprite_buffer
+            .sort_unstable_by(|a, b| b.1.total_cmp(&a.1));
 
         // step 2 - calculate the inverse camera matrix
         let inv_det = 1.0
@@ -267,7 +300,7 @@ impl Engine {
                 - self.player.direction.x * self.player.plane.y);
 
         // step 3 - draw each sprite
-        for (index, _dist) in sprite_order {
+        for &(index, _dist) in &self.sprite_buffer {
             let entity = &level.entities[index];
 
             // translate sprite position to relative to camera
@@ -359,9 +392,36 @@ impl Engine {
             }
         }
     }
-    fn draw_text(&mut self, text: &str, start_x: usize, start_y: usize, scale: usize) {
+
+    // helper function,
+    // this says here because it is frequently called,
+    // and it needs to be made easy access.
+
+    /// Writes text to the as an overlay.
+    ///
+    /// updates the buffer provide to contain the provided text drawn upon it.
+    ///
+    /// # Arguments
+    ///
+    /// * `buffer` - the u32 Vector buffer in which the text will be drawn upon.
+    /// * `scr_w` - the width of the screen to be drawn on.
+    /// * `scr_h` - the height of the screen to be drawn on.
+    /// * `text` - the text to be drawn
+    /// * `start_x` - on-screen x coordinates where the text should start.
+    /// * `start_y` - on-screen x coordinates where the text should start.
+    /// * `scale` - scale of the drawn text
+    fn draw_text(
+        buffer: &mut [u32],
+        scr_w: usize,
+        scr_h: usize,
+        text: &str,
+        start_x: usize,
+        start_y: usize,
+        scale: usize,
+    ) {
         let mut current_x = start_x;
 
+        // iterates over every single char in the text input
         for ch in text.chars() {
             if let Some(bitmap) = font8x8::BASIC_FONTS.get(ch) {
                 for (row_idx, row_byte) in bitmap.iter().enumerate() {
@@ -372,11 +432,10 @@ impl Engine {
                                     let pixel_x = current_x + (bit_idx * scale) + sx;
                                     let pixel_y = start_y + (row_idx * scale) + sy;
 
-                                    if pixel_x < self.config.scr_width
-                                        && pixel_y < self.config.scr_height
-                                    {
-                                        let index = pixel_y * self.config.scr_width + pixel_x;
-                                        self.buffer[index] = 0x00FFFFFF
+                                    // check bounds against the passed scr width and scr height
+                                    if pixel_x < scr_w && pixel_y < scr_h {
+                                        let index = pixel_y * scr_w + pixel_x;
+                                        buffer[index] = 0x00FFFFFF;
                                     }
                                 }
                             }
@@ -387,25 +446,109 @@ impl Engine {
             }
         }
     }
+
+    // a custom debug render to show current fps and player pos
+
+    /// Renders a custom debug overlay containing:
+    ///
+    /// * Fps meter
+    /// * Player position
+    /// * Crosshair
+    ///
+    /// # Arguments
+    ///
+    /// * `frame_time` - Delta time in seconds since last frame.
     fn render_debug_overlay(&mut self, frame_time: f64) {
-        let fps_str = format!("FPS: {:0}", 1.0 / frame_time);
-        let pos_str = format!(
+        let scr_w = self.config.scr_width;
+        let scr_h = self.config.scr_height;
+
+        // clear debug string buffer
+        self.debug_string.clear();
+
+        // fps meter
+        let _ = write!(&mut self.debug_string, "FPS: {:0}", 1.0 / frame_time);
+
+        // draw the fps meter
+        Engine::draw_text(
+            &mut self.buffer,
+            scr_w,
+            scr_h,
+            &self.debug_string,
+            10,
+            10,
+            2,
+        );
+
+        // clear debug string buffer
+        self.debug_string.clear();
+
+        // player position
+        let _ = write!(
+            &mut self.debug_string,
             "POS: X:{:.1} Y:{:.1}",
             self.player.position.x, self.player.position.y
         );
-        let hp_str = format!(
+
+        // draw the player position
+        Engine::draw_text(
+            &mut self.buffer,
+            scr_w,
+            scr_h,
+            &self.debug_string,
+            10,
+            30,
+            2,
+        );
+
+        // clear debug string buffer
+        self.debug_string.clear();
+
+        // player status
+        let _ = write!(
+            &mut self.debug_string,
             "HP: {:.0} ARMOR: {:.0}",
             self.player.health, self.player.armor
         );
 
-        self.draw_text(&fps_str, 10, 10, 2);
-        self.draw_text(&pos_str, 10, 30, 2);
-        self.draw_text(&hp_str, 10, 50, 2);
+        // draw player status
+        Engine::draw_text(
+            &mut self.buffer,
+            scr_w,
+            scr_h,
+            &self.debug_string,
+            10,
+            50,
+            2,
+        );
 
-        let center_x = self.config.scr_width / 2;
-        let center_y = self.config.scr_height / 2;
-        self.draw_text("+", center_x - 8, center_y - 8, 2);
+        // get the screen center
+        let center_x = scr_w / 2;
+        let center_y = scr_h / 2;
+
+        // draw crosshair
+        Engine::draw_text(
+            &mut self.buffer,
+            scr_w,
+            scr_h,
+            "+",
+            center_x - 8,
+            center_y - 8,
+            2,
+        );
     }
+
+    // helper function, gets the tile according to the coordinates
+
+    /// Gets a single, specific tile according to the provided coordinates in the current level.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - the x coordinate of the tile.
+    /// * `y` - the y coordinate of the tile.
+    ///
+    /// # Returns
+    ///
+    /// * the `u8` address of the tile.
     fn get_tile(&self, x: usize, y: usize) -> u8 {
         let level = &self.config.levels[self.current_level_idx];
 
@@ -413,71 +556,177 @@ impl Engine {
 
         *level.map.get(index).unwrap_or(&1)
     }
+
+    // input handling, be it from movement or interaction
+
+    /// Handles the player's inputs
+    ///
+    /// # Arguments
+    ///
+    /// * `frame_time` - Delta time in seconds since last frame.
     fn handle_input(&mut self, frame_time: f64) {
-        // set the rate of the movement
+        // ------------------------------------------------------------
+        // ui controls
+        // ------------------------------------------------------------
+
+        // pause screen handle
+        if self.window.is_key_pressed(Key::Escape, KeyRepeat::No) {
+            self.is_paused = !self.is_paused;
+
+            // reset mouse pos
+            if !self.is_paused {
+                self.input.last_mouse_x = None;
+            }
+        }
+
+        // if game is paused release the mouse control
+        if self.is_paused {
+            // We MUST ensure the mouse is visible and free to leave the window when paused!
+            self.window.set_cursor_visibility(true);
+            return;
+        }
+
+        // else cursor is to remain not visible
+        self.window.set_cursor_visibility(false);
+
+        // mouse configs
+        let mouse_sensitivity = 0.003;
+
+        // ------------------------------------------------------------
+        // movement and vision control
+        // ------------------------------------------------------------
+
         let move_step = frame_time * self.player.move_speed;
-        let rotation_step = frame_time * self.player.rotation_speed;
 
-        // move forward
-        if self.window.is_key_down(Key::Up) || self.window.is_key_down(Key::W) {
-            let next_x = self.player.position.x + self.player.direction.x * move_step;
-            let next_y = self.player.position.y + self.player.direction.y * move_step;
+        let right_dir_x = -self.player.direction.y;
+        let right_dir_y = self.player.direction.x;
 
-            // check X collision
+        let mut input_x = 0.0;
+        let mut input_y = 0.0;
+
+        // normalized spatial movement input
+        // TODO: make controls dynamic (ex.: w or up, s or down, a or right ...)
+        if self.window.is_key_down(Key::W) {
+            input_y += 1.0;
+        }
+        if self.window.is_key_down(Key::S) {
+            input_y -= 1.0;
+        }
+        if self.window.is_key_down(Key::D) {
+            input_x -= 1.0;
+        }
+        if self.window.is_key_down(Key::A) {
+            input_x += 1.0;
+        }
+
+        if input_x != 0.0 || input_y != 0.0 {
+            // if moving diagonally, normalize speed
+            if input_x != 0.0 && input_y != 0.0 {
+                let inv_sqrt2 = std::f64::consts::FRAC_1_SQRT_2; // famous fast inverse sqr root
+                input_x *= inv_sqrt2;
+                input_y *= inv_sqrt2;
+            }
+
+            // calculate final movement vectors
+            let move_vec_x =
+                (self.player.direction.x * input_y + right_dir_x * input_x) * move_step;
+            let move_vec_y =
+                (self.player.direction.y * input_y + right_dir_y * input_x) * move_step;
+
+            let next_x = self.player.position.x + move_vec_x;
+            let next_y = self.player.position.y + move_vec_y;
+
+            // apply collision
             if self.get_tile(next_x as usize, self.player.position.y as usize) == 0 {
                 self.player.position.x = next_x;
             }
-            // check Y collision
             if self.get_tile(self.player.position.x as usize, next_y as usize) == 0 {
                 self.player.position.y = next_y;
             }
         }
 
-        // move backward
-        if self.window.is_key_down(Key::Down) || self.window.is_key_down(Key::S) {
-            let next_x = self.player.position.x - self.player.direction.x * move_step;
-            let next_y = self.player.position.y - self.player.direction.y * move_step;
+        // horizontal camera movement
+        if let Some((mouse_x, _mouse_y)) = self.window.get_mouse_pos(MouseMode::Pass) {
+            // normal rotation math
+            if let Some(last_x) = self.input.last_mouse_x {
+                let mouse_delta_x = (mouse_x - last_x) as f64;
 
-            // check X collision
-            if self.get_tile(next_x as usize, self.player.position.y as usize) == 0 {
-                self.player.position.x = next_x;
+                if mouse_delta_x != 0.0 && mouse_delta_x.abs() < 100.0 {
+                    let rot_step = -mouse_delta_x * mouse_sensitivity;
+                    let cos_rot = rot_step.cos();
+                    let sin_rot = rot_step.sin();
+
+                    let old_dir_x = self.player.direction.x;
+                    self.player.direction.x =
+                        self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
+                    self.player.direction.y =
+                        old_dir_x * sin_rot + self.player.direction.y * cos_rot;
+
+                    let old_plane_x = self.player.plane.x;
+                    self.player.plane.x =
+                        self.player.plane.x * cos_rot - self.player.plane.y * sin_rot;
+                    self.player.plane.y = old_plane_x * sin_rot + self.player.plane.y * cos_rot;
+                }
             }
-            // check Y collision
-            if self.get_tile(self.player.position.x as usize, next_y as usize) == 0 {
-                self.player.position.y = next_y;
+
+            // edge warping check
+            // if mouse out of the window, snap back to center of the game screen
+            if mouse_x < 50.0 || mouse_x > (self.config.scr_width as f32 - 50.0) {
+                let (win_x, win_y) = self.window.get_position();
+                let monitor_center_x = win_x as i32 + (self.config.scr_width as i32 / 2);
+                let monitor_center_y = win_y as i32 + (self.config.scr_height as i32 / 2);
+
+                // unsafe windows sys_call to move the mouse to the center of the game screen
+                #[cfg(windows)]
+                unsafe {
+                    windows_sys::Win32::UI::WindowsAndMessaging::SetCursorPos(
+                        monitor_center_x,
+                        monitor_center_y,
+                    );
+                }
+
+                // reset mouse pos
+                self.input.last_mouse_x = None;
+            } else {
+                // if no warp, just save pos
+                self.input.last_mouse_x = Some(mouse_x);
             }
+        } else {
+            // else just reset mouse pos
+            self.input.last_mouse_x = None;
         }
 
-        // rotate right
-        if self.window.is_key_down(Key::Right) || self.window.is_key_down(Key::D) {
-            let cos_rot = (-rotation_step).cos();
-            let sin_rot = (-rotation_step).sin();
+        // ------------------------------------------------------------
+        // interaction controls
+        // ------------------------------------------------------------
 
-            let old_dir_x = self.player.direction.x;
-            self.player.direction.x =
-                self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
-            self.player.direction.y = old_dir_x * sin_rot + self.player.direction.y * cos_rot;
-
-            let old_plane_x = self.player.plane.x;
-            self.player.plane.x = self.player.plane.x * cos_rot - self.player.plane.y * sin_rot;
-            self.player.plane.y = old_plane_x * sin_rot + self.player.plane.y * cos_rot;
+        // interact
+        if self.window.is_key_pressed(Key::E, KeyRepeat::No) {
+            self.player.inventory.change_weapon();
         }
 
-        // rotate left
-        if self.window.is_key_down(Key::Left) || self.window.is_key_down(Key::A) {
-            let cos_rot = rotation_step.cos();
-            let sin_rot = rotation_step.sin();
+        // shoot
+        if self.window.get_mouse_down(MouseButton::Left) {
+            // TODO: shoot logic
+        }
 
-            let old_dir_x = self.player.direction.x;
-            self.player.direction.x =
-                self.player.direction.x * cos_rot - self.player.direction.y * sin_rot;
-            self.player.direction.y = old_dir_x * sin_rot + self.player.direction.y * cos_rot;
+        // ------------------------------------------------------------
+        // debug
+        // ------------------------------------------------------------
 
-            let old_plane_x = self.player.plane.x;
-            self.player.plane.x = self.player.plane.x * cos_rot - self.player.plane.y * sin_rot;
-            self.player.plane.y = old_plane_x * sin_rot + self.player.plane.y * cos_rot;
+        // toggle debug mode
+        if self.window.is_key_pressed(Key::F3, KeyRepeat::No) {
+            self.show_debug = !self.show_debug;
         }
     }
+
+    // update all entities states
+
+    /// Updates all entities inside the current level.
+    ///
+    /// # Arguments
+    ///
+    /// * `frame_time` - Delta time in seconds since last frame.
     fn update_entities(&mut self, frame_time: f64) {
         // clone the pos to avoid the borrow checker's wrath
         let player_pos = CartesianPos {
@@ -495,6 +744,14 @@ impl Engine {
             entity.update(&player_pos, frame_time, map_slice, map_width);
         }
     }
+
+    // changes the current level
+
+    /// Changes the current level to next one.
+    ///
+    /// # Arguments
+    ///
+    /// * `new_level_idx` - the desired level to be changed to.
     pub fn change_level(&mut self, new_level_idx: usize) {
         // prevent crashing if player beat the last level
         if new_level_idx >= self.config.levels.len() {
@@ -512,19 +769,32 @@ impl Engine {
         self.player.position.x = self.config.levels[self.current_level_idx].player_start_x;
         self.player.position.y = self.config.levels[self.current_level_idx].player_start_y;
     }
+
+    // engine constructor
+
+    /// Engine's constructor
+    ///
+    /// # Arguments
+    ///
+    /// * `filepath` - the .ron config file to load.
+    ///
+    /// # Returns
+    /// * `Self` - called by other methods.
     pub fn new(filepath: &str) -> Self {
         let config = load_config(filepath);
 
-        let window = create_window(&config, WindowOptions::default());
+        let mut window = create_window(&config, WindowOptions::default());
 
-        // simple check
+        window.set_cursor_visibility(false);
+
+        // simple check for levels
         if config.levels.is_empty() {
             panic!("Configuration file has no levels!");
         }
 
-        // always starts with level 0
         let mut textures: Vec<Vec<u32>> = Vec::with_capacity(config.levels[0].textures.len());
 
+        // always starts with level 0
         for tx in &config.levels[0].textures {
             textures.push(load_texture(tx));
         }
@@ -541,6 +811,7 @@ impl Engine {
             CartesianPos { x: -1.0, y: 0.0 },
             CartesianPos { x: 0.0, y: 0.66 },
         );
+
         Self {
             config,
             window,
@@ -548,24 +819,43 @@ impl Engine {
             z_buffer: vec![0.0; z_buffer_size],
             textures,
             current_level_idx: 0,
+            show_debug: false,
             player: starting_player,
+            input: InputState::new(),
+            is_paused: false,
+            sprite_buffer: Vec::new(),
+            debug_string: String::with_capacity(64),
         }
     }
+
+    // engine runner, wraps all other methods
+
+    /// Engine run wrapper
+    ///
+    /// when calling this the engine will call all other methods according to the .ron config,
+    /// this is what you want to call to run the game.
     pub fn run(&mut self) {
         let mut current_time = Instant::now();
 
-        while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
+        while self.window.is_open() && !self.window.is_key_down(Key::Key0) {
             // calculating delta time
             let new_time = Instant::now();
             // frame_time is time relative to the game run time (delta)
             let frame_time = new_time.duration_since(current_time).as_secs_f64();
             current_time = new_time;
 
+            // autopause on lost focus
+            if !self.window.is_active() && !self.is_paused {
+                self.is_paused = true;
+            }
+
             // input handling
             self.handle_input(frame_time);
 
             // entity updating
-            self.update_entities(frame_time);
+            if !self.is_paused {
+                self.update_entities(frame_time);
+            }
 
             // floor and ceiling rendering math
             self.render_floor_ceiling();
@@ -576,61 +866,40 @@ impl Engine {
             // sprite rendering
             self.render_sprites();
 
+            // debug overlay rendering
+            if self.show_debug {
+                self.render_debug_overlay(frame_time);
+            }
+
+            // draws a large "PAUSED" in the center of the screen
+            if self.is_paused {
+                let center_x = (self.config.scr_width / 2) - 96;
+                let center_y = (self.config.scr_height / 2) - 16;
+
+                Engine::draw_text(
+                    &mut self.buffer,
+                    self.config.scr_width,
+                    self.config.scr_height,
+                    "PAUSED",
+                    center_x,
+                    center_y,
+                    4,
+                );
+                Engine::draw_text(
+                    &mut self.buffer,
+                    self.config.scr_width,
+                    self.config.scr_height,
+                    "PRESS Esc TO RESUME",
+                    center_x - 16,
+                    center_y + 40,
+                    2,
+                );
+            }
+
             // finally, update the window
             self.window
                 .update_with_buffer(&self.buffer, self.config.scr_width, self.config.scr_height)
                 .unwrap();
         }
     }
-}
-
-// loads/parses a single 64x64 png texture, returns the texture u32 vector
-fn load_texture(filepath: &str) -> Vec<u32> {
-    // tries to open the image file (png only), panics if can't
-    let img: DynamicImage = image::open(filepath)
-        .unwrap_or_else(|e| panic!("Failed to open image {}: {}", filepath, e));
-
-    // ensures 64x64 pixel size
-    let img: DynamicImage = img.resize_exact(64, 64, image::imageops::FilterType::Nearest);
-
-    // transforms the images to rgba format
-    let rgba_image: RgbaImage = img.to_rgba8();
-
-    // initializes the buffer where the textures will be held
-    let mut texture_buffer: Vec<u32> = vec![0; 64 * 64];
-
-    // loops through each pixel, unpacks them to the rgba value, and appends each to the texture buffer
-    for (x, y, pixel) in rgba_image.enumerate_pixels() {
-        let r: u32 = pixel[0] as u32;
-        let g: u32 = pixel[1] as u32;
-        let b: u32 = pixel[2] as u32;
-        // TODO: add alpha to RGBA calculation
-
-        // minifb uses 0x00RRGGBB (ignoring alpha) *for now*
-        let color: u32 = (r << 16) + (g << 8) + b;
-        texture_buffer[(y as usize) * 64 + (x as usize)] = color;
-    }
-    // returns the image as an u32 vector of RGB pixels
-    texture_buffer
-}
-
-// create a window using the params specifications
-fn create_window(options: &GameConfig, window_options: WindowOptions) -> Window {
-    // creates a window object using minifb
-    let mut window: Window = Window::new(
-        &options.name, // window name only accepts &str
-        options.scr_width,
-        options.scr_height,
-        window_options,
-    )
-    .unwrap_or_else(|e| {
-        // "work or panic" basically
-        panic!("Failed to create window: {}", e);
-    });
-
-    // sets the fps limit & target for application
-    window.set_target_fps(options.target_fps);
-
-    // returns the window object
-    window
 }
