@@ -1,0 +1,46 @@
+name: Build and Release RREngine
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Release Binary
+        run: cargo build --release
+
+      - name: Package Assets and Binary into Zip
+        run: |
+          # 1. Create staging folder
+          mkdir eyegore_release
+          
+          # 2. Copy the executable. 
+          cp target/release/rre.exe eyegore_release/
+          
+          # 3. Copy the assets folder
+          cp -r assets eyegore_release/assets
+          
+          # 4. Zip the folder using Windows PowerShell
+          Compress-Archive -Path eyegore_release/* -DestinationPath eyegore-windows.zip
+        shell: pwsh
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: eyegore-windows.zip
+          generate_release_notes: true
