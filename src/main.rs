@@ -1,3 +1,5 @@
+use rre::run_game;
+
 fn main() {
-    println!("Hello, world!");
+    run_game("assets/config.ron")
 }
