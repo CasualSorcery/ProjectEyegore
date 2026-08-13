@@ -48,6 +48,9 @@ impl Engine {
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
 
+        // fog distance
+        let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
+
         // TODO: hardcoded variables, make them dynamic
         let tex_w: usize = 64;
         let tex_h: usize = 64;
@@ -193,7 +196,7 @@ impl Engine {
                 }
 
                 // fog effect
-                color = Engine::shade_color(color, perp_wall_dist, 15.0);
+                color = Engine::shade_color(color, perp_wall_dist, fog_dist);
 
                 // write to buffer
                 self.buffer[(y as usize) * scr_w + x] = color;
@@ -204,8 +207,12 @@ impl Engine {
     /// Renders the floor and ceiling by making ray-casting calculations,
     /// writes the result in the Engine's `buffer` and `z_buffer`.
     fn render_floor_ceiling(&mut self) {
+        // screen size to render
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
+
+        // fog distance
+        let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
 
         // hardcoded to 64 for now since our load_texture method forces 64x64
         // TODO: make it dynamic
@@ -260,7 +267,7 @@ impl Engine {
                 floor_color = (floor_color >> 1) & 0x007F7F7F;
 
                 // fog effect
-                floor_color = Engine::shade_color(floor_color, row_distance, 15.0);
+                floor_color = Engine::shade_color(floor_color, row_distance, fog_dist);
 
                 self.buffer[y * scr_w + x] = floor_color;
 
@@ -270,7 +277,7 @@ impl Engine {
                 ceil_color = (ceil_color >> 1) & 0x007F7F7F;
 
                 // fog effect
-                ceil_color = Engine::shade_color(ceil_color, row_distance, 15.0);
+                ceil_color = Engine::shade_color(ceil_color, row_distance, fog_dist);
 
                 // draw symmetrically at the top of the screen
                 self.buffer[(scr_h - y - 1) * scr_w + x] = ceil_color;
@@ -281,8 +288,12 @@ impl Engine {
     /// Renders the sprites by making ray-casting calculations,
     /// writes the result in the Engine's `buffer`, `z_buffer` and `sprites_buffer`.
     fn render_sprites(&mut self) {
+        // screen size to render
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
+
+        // fog distance
+        let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
 
         // TODO: hardcoded, fix later
         let tex_w: isize = 64;
@@ -395,7 +406,7 @@ impl Engine {
                         // mask out pure black pixels (transparency)
                         if (color & 0x00FFFFFF) != 0 {
                             // fog effect
-                            color = Engine::shade_color(color, transform_y, 15.0);
+                            color = Engine::shade_color(color, transform_y, fog_dist);
 
                             self.buffer[(y as usize) * scr_w + stripe_usize] = color;
                         }

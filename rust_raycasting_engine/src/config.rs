@@ -17,16 +17,15 @@ pub struct Level {
     pub map: Vec<u8>,
     pub player_start_x: f64,
     pub player_start_y: f64,
+    pub max_fog_distance: f64,
     pub textures: Vec<String>,
     pub entities: Vec<Entity>,
 }
 pub fn load_config(filepath: &str) -> GameConfig {
     // tries to read the ron file
-    let file_content = std::fs::read_to_string(filepath)
-        .expect("Failed to read file");
+    let file_content = std::fs::read_to_string(filepath).expect("Failed to read file");
     // tries to serialize the ron file into the GameConfig Struct
-    let config = ron::from_str(&file_content)
-        .expect("Failed to parse RON");
+    let config = ron::from_str(&file_content).expect("Failed to parse RON");
 
     // returns the config
     config
