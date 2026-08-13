@@ -8,8 +8,6 @@ pub fn load_texture(filepath: &str) -> Vec<u32> {
     let img: DynamicImage = image::open(filepath)
         .unwrap_or_else(|e| panic!("Failed to open image {}: {}", filepath, e));
 
-    let (tex_x, tex_y) = get_img_size(&img);
-
     // ensures 64x64 pixel size
     let img: DynamicImage = img.resize_exact(64, 64, image::imageops::FilterType::Nearest);
 

@@ -8,6 +8,9 @@ use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
 use std::fmt::Write;
 use std::time::Instant;
 
+// constant size of textures
+const TEX_SIZE: usize = 64;
+
 // main engine struct
 
 /// Represents the entirety of the game's engine, wraps most of the other modules' methods
@@ -50,10 +53,6 @@ impl Engine {
 
         // fog distance
         let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
-
-        // TODO: hardcoded variables, make them dynamic
-        let tex_w: usize = 64;
-        let tex_h: usize = 64;
 
         // main loop of wall ray-casting
         for x in 0..scr_w {
@@ -162,23 +161,23 @@ impl Engine {
             wall_x -= wall_x.floor();
 
             // X coordinate on the texture
-            let mut tex_x = (wall_x * (tex_w as f64)) as usize;
+            let mut tex_x = (wall_x * (TEX_SIZE as f64)) as usize;
 
             // flip texture horizontally based on side
             if side == 0 && ray_dir_x > 0.0 {
-                tex_x = tex_w - tex_x - 1;
+                tex_x = TEX_SIZE - tex_x - 1;
             }
             if side == 1 && ray_dir_y < 0.0 {
-                tex_x = tex_w - tex_x - 1;
+                tex_x = TEX_SIZE - tex_x - 1;
             }
 
             // texture stepping
-            let step = 1.0 * (tex_h as f64) / (line_height as f64);
+            let step = 1.0 * (TEX_SIZE as f64) / (line_height as f64);
             let mut tex_pos = (draw_start - scr_h as isize / 2 + line_height / 2) as f64 * step;
 
             // step 7 - draw the pixels of the vertical stripe
             for y in draw_start..=draw_end {
-                let tex_y = (tex_pos as usize) & (tex_h - 1);
+                let tex_y = (tex_pos as usize) & (TEX_SIZE - 1);
                 tex_pos += step;
 
                 // safety: prevent panic if the map calls for a texture that didn't load
@@ -188,7 +187,7 @@ impl Engine {
                     &self.textures[0] // fallback to first texture
                 };
 
-                let mut color = texture_slice[tex_h * tex_y + tex_x];
+                let mut color = texture_slice[TEX_SIZE * tex_y + tex_x];
 
                 // fake lighting
                 if side == 1 {
@@ -211,13 +210,13 @@ impl Engine {
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
 
+        // grabbing the level config values
+        let level = &self.config.levels[self.current_level_idx];
+        let floor_idx = level.floor_tex_idx;
+        let ceil_idx = level.ceil_tex_idx;
+
         // fog distance
         let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
-
-        // hardcoded to 64 for now since our load_texture method forces 64x64
-        // TODO: make it dynamic
-        let tex_w: usize = 64;
-        let tex_h: usize = 64;
 
         // loop only through the bottom half of the screen
         for y in (scr_h / 2)..scr_h {
@@ -253,15 +252,14 @@ impl Engine {
                 let cell_y = floor_y as i32;
 
                 // get the texture coordinate from the fractional part
-                let tx = ((tex_w as f64 * (floor_x - cell_x as f64)) as usize) & (tex_w - 1);
-                let ty = ((tex_h as f64 * (floor_y - cell_y as f64)) as usize) & (tex_h - 1);
+                let tx = ((TEX_SIZE as f64 * (floor_x - cell_x as f64)) as usize) & (TEX_SIZE - 1);
+                let ty = ((TEX_SIZE as f64 * (floor_y - cell_y as f64)) as usize) & (TEX_SIZE - 1);
 
                 floor_x += floor_step_x;
                 floor_y += floor_step_y;
 
-                // TODO: hardcoded floor texture, make it dynamic
-                // draw floor (using texture 3: Greystone)
-                let mut floor_color = self.textures[3][tex_w * ty + tx];
+                // draw floor
+                let mut floor_color = self.textures[floor_idx][TEX_SIZE * ty + tx];
 
                 // fake lightning
                 floor_color = (floor_color >> 1) & 0x007F7F7F;
@@ -271,9 +269,8 @@ impl Engine {
 
                 self.buffer[y * scr_w + x] = floor_color;
 
-                // TODO: hardcoded ceiling texture, make it dynamic
-                // draw ceiling (using texture 6: Wood)
-                let mut ceil_color = self.textures[6][tex_w * ty + tx];
+                // draw ceiling
+                let mut ceil_color = self.textures[ceil_idx][TEX_SIZE * ty + tx];
                 ceil_color = (ceil_color >> 1) & 0x007F7F7F;
 
                 // fog effect
@@ -294,10 +291,6 @@ impl Engine {
 
         // fog distance
         let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
-
-        // TODO: hardcoded, fix later
-        let tex_w: isize = 64;
-        let tex_h: isize = 64;
 
         let level = &self.config.levels[self.current_level_idx];
 
@@ -362,16 +355,17 @@ impl Engine {
 
             // step 4 - render the vertical stripes
             for stripe in draw_start_x..draw_end_x {
-                let mut tex_x = (256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * tex_w
-                    / sprite_width)
-                    / 256;
+                let mut tex_x =
+                    (256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * TEX_SIZE as isize
+                        / sprite_width)
+                        / 256;
 
                 // clamp tex_x
                 if tex_x < 0 {
                     tex_x = 0;
                 }
-                if tex_x >= tex_w {
-                    tex_x = tex_w - 1;
+                if tex_x >= TEX_SIZE as isize {
+                    tex_x = TEX_SIZE as isize - 1;
                 }
 
                 let stripe_usize = stripe as usize;
@@ -384,14 +378,14 @@ impl Engine {
                 {
                     for y in draw_start_y..draw_end_y {
                         let d = y * 256 - scr_h as isize * 128 + sprite_height * 128;
-                        let mut tex_y = ((d * tex_h) / sprite_height) / 256;
+                        let mut tex_y = ((d * TEX_SIZE as isize) / sprite_height) / 256;
 
                         // clamp tex_y
                         if tex_y < 0 {
                             tex_y = 0;
                         }
-                        if tex_y >= tex_h {
-                            tex_y = tex_h - 1;
+                        if tex_y >= TEX_SIZE as isize {
+                            tex_y = TEX_SIZE as isize - 1;
                         }
 
                         // safety check: ensure the texture exists
@@ -401,7 +395,7 @@ impl Engine {
                             0
                         };
                         let mut color = self.textures[tex_idx]
-                            [(tex_h as usize) * (tex_y as usize) + (tex_x as usize)];
+                            [(TEX_SIZE) * (tex_y as usize) + (tex_x as usize)];
 
                         // mask out pure black pixels (transparency)
                         if (color & 0x00FFFFFF) != 0 {
