@@ -18,6 +18,8 @@ pub struct Level {
     pub player_start_x: f64,
     pub player_start_y: f64,
     pub max_fog_distance: f64,
+    pub floor_tex_idx: usize,
+    pub ceil_tex_idx: usize,
     pub textures: Vec<String>,
     pub entities: Vec<Entity>,
 }
