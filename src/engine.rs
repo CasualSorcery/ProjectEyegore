@@ -1,4 +1,4 @@
-use crate::config::{load_config, GameConfig};
+use crate::config::{GameConfig, load_config};
 use crate::input::InputState;
 use crate::map::CartesianPos;
 use crate::player::Player;
