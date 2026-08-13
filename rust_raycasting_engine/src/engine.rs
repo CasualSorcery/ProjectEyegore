@@ -192,6 +192,9 @@ impl Engine {
                     color = (color >> 1) & 0x007F7F7F;
                 }
 
+                // fog effect
+                color = Engine::shade_color(color, perp_wall_dist, 15.0);
+
                 // write to buffer
                 self.buffer[(y as usize) * scr_w + x] = color;
             }
@@ -256,12 +259,18 @@ impl Engine {
                 // fake lightning
                 floor_color = (floor_color >> 1) & 0x007F7F7F;
 
+                // fog effect
+                floor_color = Engine::shade_color(floor_color, row_distance, 15.0);
+
                 self.buffer[y * scr_w + x] = floor_color;
 
                 // TODO: hardcoded ceiling texture, make it dynamic
                 // draw ceiling (using texture 6: Wood)
                 let mut ceil_color = self.textures[6][tex_w * ty + tx];
                 ceil_color = (ceil_color >> 1) & 0x007F7F7F;
+
+                // fog effect
+                ceil_color = Engine::shade_color(ceil_color, row_distance, 15.0);
 
                 // draw symmetrically at the top of the screen
                 self.buffer[(scr_h - y - 1) * scr_w + x] = ceil_color;
@@ -380,11 +389,14 @@ impl Engine {
                         } else {
                             0
                         };
-                        let color = self.textures[tex_idx]
+                        let mut color = self.textures[tex_idx]
                             [(tex_h as usize) * (tex_y as usize) + (tex_x as usize)];
 
                         // mask out pure black pixels (transparency)
                         if (color & 0x00FFFFFF) != 0 {
+                            // fog effect
+                            color = Engine::shade_color(color, transform_y, 15.0);
+
                             self.buffer[(y as usize) * scr_w + stripe_usize] = color;
                         }
                     }
@@ -445,6 +457,40 @@ impl Engine {
                 current_x += 8 * scale + scale;
             }
         }
+    }
+
+    // apply shading to pixels
+
+    /// Shades colored pixels based on intensity
+    ///
+    /// # Arguments
+    ///
+    /// * `color` - The u32 color pixel to be shaded.
+    /// * `distance` - The base distance between the camera and the pixel.
+    /// * `max_distance` - The max distance between the camera and the pixel.
+    ///
+    /// # Returns
+    ///
+    /// * the already shaded u32 pixel.
+    fn shade_color(color: u32, distance: f64, max_distance: f64) -> u32 {
+        // light intensity, 1.0 = full bright, 0.0 = pitch black
+        let mut intensity = 1.0 - (distance / max_distance);
+
+        // clamp intensity
+        intensity = intensity.clamp(0.0, 1.0);
+
+        // extracting rgb values
+        let r = ((color >> 16) & 0xFF) as f64;
+        let g = ((color >> 8) & 0xFF) as f64;
+        let b = (color & 0xFF) as f64;
+
+        // apply the intensity
+        let shade_r = (r * intensity) as u32;
+        let shade_g = (g * intensity) as u32;
+        let shade_b = (b * intensity) as u32;
+
+        // repack into an u32 rgb pixel
+        (shade_r << 16) | (shade_g << 8) | shade_b
     }
 
     // a custom debug render to show current fps and player pos
