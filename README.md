@@ -1,8 +1,8 @@
 # Project Eyegore
 A Retro 2D/3D Raycasting Engine Written in Rust
 
-<div>
-<p align="center">
+<div align="center">
+<p>
 
 <img src="docs/icons/eyegoreicon.png" alt="Eyegore" width="200"/>
 
