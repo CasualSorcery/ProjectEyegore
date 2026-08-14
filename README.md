@@ -1,15 +1,3 @@
-# EyeGore
-## Uma engine para criação de jogos Doom-Like baseada em Rust.
+# Project EyeGore
 
-
-### Tá. E o que isso significa?
- Lorem Ipsum Dolor sit amet
-
-### Como usar
- Lorem Ipsum Dolor sit amet
-
-### Limitações e Funcionalidades
- Lorem Ipsum Dolor sit amet
-
-### Lorem Ipsum
- Dolor sit amet
+Select Language / Selecione o Idioma: [English](README.eng.md) | [Português Brasileiro](README.pt-br.md)
