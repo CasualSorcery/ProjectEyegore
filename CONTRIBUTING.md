@@ -1,7 +1,7 @@
 <p>
 
-[![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge&logo=github)](README.md)
-[![Português](https://img.shields.io/badge/Idioma-Português-green?style=for-the-badge&logo=github)](README.pt-br.md)
+[![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge&logo=github)](CONTRIBUTING.md)
+[![Português](https://img.shields.io/badge/Idioma-Português-green?style=for-the-badge&logo=github)](CONTRIBUTING.pt-br.md)
 
 </p>
 
