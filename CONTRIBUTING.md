@@ -1,7 +1,7 @@
 <div align="center">
 
-[![English](https://shields.io)](CONTRIBUTING.md)
-[![Português](https://shields.io)](CONTRIBUTING.pt-br.md)
+[![English](https://shields.io+)](CONTRIBUTING.md)
+[![Português](https://shields.io+)](CONTRIBUTING.pt-br.md)
 
 </div>
 
