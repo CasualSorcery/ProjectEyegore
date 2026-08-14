@@ -11,16 +11,16 @@
 
 Obrigado pelo seu interesse em contribuir para o nosso projeto! Por favor, siga estas diretrizes básicas para garantir um processo tranquilo.
 
-## 🐛 Relatando Bugs
+## Relatando Bugs
 - Verifique as Issues existentes antes de abrir uma nova.
 - Use um título claro e descritivo.
 - Forneça uma descrição passo a passo para reproduzir o problema.
 
-## 💡 Sugerindo Melhorias
+## Sugerindo Melhorias
 - Abra uma Issue detalhando a funcionalidade que você gostaria de ver.
 - Explique por que essa funcionalidade seria útil para o projeto.
 
-## 🚀 Pull Requests
+## Pull Requests
 1. Faça um Fork do repositório.
 2. Crie uma nova branch: `git checkout -b feature/minha-nova-funcionalidade`.
 3. Adicione suas alterações ao commit: `git commit -m 'Adiciona nova funcionalidade'`.
