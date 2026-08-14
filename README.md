@@ -52,7 +52,7 @@ For bugs and/or simple problems feel free to [open an issue](https://github.com/
 
 ## Getting Started
 
-Just get the latest release and unzip to your preferred directory, write your game configuration in the assets/config.ron, set up your custom textures and run the .exe.
+Just get the latest release and unzip to your preferred directory, write your game configuration in the `assets/config.ron`, set up your custom textures and run the `.exe`.
 
 Below there's a step-by-step guide for you to setup your first game.
 
