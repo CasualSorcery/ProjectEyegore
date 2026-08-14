@@ -1,8 +1,15 @@
 <div align="center">
+<p>
 
-[![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge&logo=github)](CONTRIBUTING.md)
-[![Português](https://img.shields.io/badge/Idioma-Português-green?style=for-the-badge&logo=github)](CONTRIBUTING.pt-br.md)
+<img src="docs/icons/eyegoreicon.png" alt="Eyegore" width="200"/>
 
+[![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge&logo=github)](README.md)
+[![Português](https://img.shields.io/badge/Idioma-Português-green?style=for-the-badge&logo=github)](README.pt-br.md)
+
+[![MIT license](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/Herinhos/project_eyegore)](https://github.com/Herinhos/project_eyegore/releases)
+
+</p>
 </div>
 
 ---
