@@ -1,4 +1,4 @@
-name: Build and Release RREngine
+name: Build and Release Eyegore Engine
 
 on:
   push:
@@ -16,31 +16,35 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
 
       - name: Build Release Binary
         run: cargo build --release
 
       - name: Package Assets and Binary into Zip
         run: |
-          # 1. Create staging folder
-          mkdir eyegore_release
-          
-          # 2. Copy the executable. 
-          cp target/release/rre.exe eyegore_release/
-          
-          # 3. Copy the assets folder
-          cp -r assets eyegore_release/assets
-          
-          # 4. Zip the folder using Windows PowerShell
-          Compress-Archive -Path eyegore_release/* -DestinationPath eyegore-windows.zip
+          if (Test-Path eyegore_release) { Remove-Item -Recurse -Force eyegore_release }
+          New-Item -ItemType Directory -Force -Path eyegore_release
+
+          Copy-Item -Path target/release/rre.exe -Destination eyegore_release/ -Force
+
+          if (Test-Path assets) {
+              Copy-Item -Path assets -Destination eyegore_release/assets -Recurse -Force
+          } else {
+              Write-Warning "Warning: 'assets' folder not found on root directory."
+          }
+
+          Compress-Archive -Path eyegore_release/* -DestinationPath eyegore-windows.zip -Force
         shell: pwsh
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: eyegore-windows.zip
           generate_release_notes: true
