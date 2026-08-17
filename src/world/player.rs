@@ -1,13 +1,13 @@
-use crate::map::CartesianPos;
+use crate::world::map::CartesianPos;
 
 #[derive(PartialEq)]
 pub enum Items {
-    WEAPON {
+    Weapon {
         name: String,
         damage: f32,
         ammo: u32,
     },
-    KEY {
+    Key {
         name: String,
         opens: u8,
     },
@@ -19,27 +19,25 @@ pub struct Inventory {
 impl Inventory {
     pub fn add_item(&mut self, new_item: Items) {
         match new_item {
-            Items::WEAPON { name, damage, ammo } => {
-                // look for an existing weapon with the same name
+            Items::Weapon { name, damage, ammo } => {
+                // look for an existing Weapon with the same name
                 for item in self.stashed_items.iter_mut() {
-                    if let Items::WEAPON {
+                    if let Items::Weapon {
                         name: existing_name,
                         ammo: existing_ammo,
                         ..
                     } = item
-                    {
-                        if *existing_name == name {
-                            // if is the same weapon, only add the ammo
+                        && *existing_name == name {
+                            // if is the same Weapon, only add the ammo
                             *existing_ammo += ammo;
                             return;
                         }
                     }
-                }
-                // else just add the weapon to the inventory
+                // else just add the Weapon to the inventory
                 self.stashed_items
-                    .push(Items::WEAPON { name, damage, ammo });
+                    .push(Items::Weapon { name, damage, ammo });
             }
-            Items::KEY { .. } => {
+            Items::Key { .. } => {
                 self.stashed_items.push(new_item);
             }
         }
@@ -48,7 +46,7 @@ impl Inventory {
     fn get_wpn_count(&self) -> usize {
         self.stashed_items
             .iter()
-            .filter(|item| matches!(item, Items::WEAPON { .. }))
+            .filter(|item| matches!(item, Items::Weapon { .. }))
             .count()
     }
     pub fn get_equipped_wpn(&self) -> usize {
@@ -57,14 +55,14 @@ impl Inventory {
     pub fn get_current_wpn(&self) -> Option<&Items> {
         self.stashed_items
             .iter()
-            .filter(|item| matches!(item, Items::WEAPON { .. }))
+            .filter(|item| matches!(item, Items::Weapon { .. }))
             .nth(self.equipped_wpn)
     }
     pub fn get_current_wpn_mut(&mut self) -> Option<&mut Items> {
         let equipped = self.equipped_wpn;
         self.stashed_items
             .iter_mut()
-            .filter(|item| matches!(item, Items::WEAPON { .. }))
+            .filter(|item| matches!(item, Items::Weapon { .. }))
             .nth(equipped)
     }
     pub fn change_weapon(&mut self) {

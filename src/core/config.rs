@@ -1,4 +1,4 @@
-use crate::entity::Entity;
+use crate::world::entity::Entity;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
