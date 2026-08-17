@@ -18,6 +18,7 @@ impl Engine {
     /// # Returns
     ///
     /// * the `u8` address of the tile.
+    #[inline(always)]
     pub(crate) fn get_tile(&self, x: usize, y: usize) -> u8 {
         let level = &self.config.levels[self.current_level_idx];
 
@@ -183,7 +184,7 @@ impl Engine {
                 let mut damage_to_deal = 0.0;
 
                 // check weapon and consume ammo
-                if let Some(crate::world::player::Items::WEAPON {
+                if let Some(crate::world::player::Items::Weapon {
                                 damage,
                                 ammo,
                                 name: _,
@@ -236,13 +237,11 @@ impl Engine {
                     }
 
                     // 3. Apply Damage to the specific enemy
-                    if let Some(idx) = hit_index {
-                        if let crate::world::entity::EntityType::Enemy { ref mut hp, .. } =
-                            level.entities[idx].entity_type
+                    if let Some(idx) = hit_index
+                        && let crate::world::entity::EntityType::Enemy { ref mut hp, .. } = level.entities[idx].entity_type
                         {
                             *hp -= damage_to_deal;
                         }
-                    }
                 }
             }
         }

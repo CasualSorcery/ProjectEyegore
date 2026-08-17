@@ -443,6 +443,7 @@ impl Engine {
     /// # Returns
     ///
     /// * the already shaded u32 pixel.
+    #[inline(always)]
     pub(crate) fn shade_color(color: u32, distance: f64, max_distance: f64) -> u32 {
         // light intensity, 1.0 = full bright, 0.0 = pitch black
         let mut intensity = 1.0 - (distance / max_distance);
