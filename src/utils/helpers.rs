@@ -1,4 +1,4 @@
-use crate::config::GameConfig;
+use crate::core::config::GameConfig;
 use image::{DynamicImage, RgbaImage};
 use minifb::{Window, WindowOptions};
 
@@ -41,10 +41,10 @@ pub fn create_window(options: &GameConfig, window_options: WindowOptions) -> Win
         options.scr_height,
         window_options,
     )
-    .unwrap_or_else(|e| {
-        // "work or panic" basically
-        panic!("Failed to create window: {}", e);
-    });
+        .unwrap_or_else(|e| {
+            // "work or panic" basically
+            panic!("Failed to create window: {}", e);
+        });
 
     // sets the fps limit & target for application
     window.set_target_fps(options.target_fps);
