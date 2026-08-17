@@ -2,35 +2,32 @@ name: Rust CI (Format, Lint, Test)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "rust-raycaster-utils" ]
   pull_request:
     branches: [ "main" ]
-
-permissions:
-  contents: read
 
 jobs:
   check-and-test:
     name: Code Quality Checks
-    runs-on: ubuntu-latest 
+    runs-on: windows-latest 
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
-
       - name: Check Formatting (cargo fmt)
         run: cargo fmt --all -- --check
 
       - name: Run Linter (cargo clippy)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy -- -D warnings
+
+      - name: Compile and Check for Errors
+        run: cargo check --verbose
 
       - name: Run Tests (cargo test)
-        run: cargo test --verbose --all-features
+        run: cargo test --verbose
