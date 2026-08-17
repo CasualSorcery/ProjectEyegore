@@ -2,7 +2,7 @@ name: Rust CI (Format, Lint, Test)
 
 on:
   push:
-    branches: [ "main", "rust-raycaster-engine" ]
+    branches: [ "main", "rust-raycaster-utils" ]
   pull_request:
     branches: [ "main" ]
 

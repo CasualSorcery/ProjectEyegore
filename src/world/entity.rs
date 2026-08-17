@@ -1,4 +1,4 @@
-use crate::map::CartesianPos;
+use crate::world::map::CartesianPos;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
