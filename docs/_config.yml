@@ -1,0 +1,5 @@
+title: Project EyeGore
+description: A high-performance 2.5D retro raycasting engine built in Rust.
+theme: jekyll-theme-cayman
+url: "https://Herinhos.github.io"
+baseurl: "/project_eyegore"
