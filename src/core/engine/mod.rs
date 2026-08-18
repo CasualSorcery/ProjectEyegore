@@ -238,10 +238,11 @@ impl ApplicationHandler for Engine {
                                 screen_buffer[out_row_offset + x] = self.buffer[row_offset + src_x];
                             }
                         }
-
                         screen_buffer.present().unwrap();
                     }
                 }
+                // immediately request next frame redraw so windows doesn't freeze
+                self.window.as_ref().unwrap().request_redraw();
             }
 
             // keyboard input handling
