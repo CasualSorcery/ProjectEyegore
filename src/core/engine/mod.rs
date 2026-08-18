@@ -6,7 +6,7 @@ use crate::core::input::InputState;
 use crate::utils::helpers::{create_window, load_texture};
 use crate::world::map::CartesianPos;
 use crate::world::player::Player;
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Window};
 use std::time::Instant;
 
 // main Engine struct
