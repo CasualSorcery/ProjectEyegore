@@ -43,8 +43,78 @@ jobs:
           Compress-Archive -Path eyegore_release/* -DestinationPath eyegore-windows.zip -Force
         shell: pwsh
 
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-build
+          path: eyegore-windows.zip
+
+  build-linux:
+    name: Build Linux Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Install Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libwayland-dev libxkbcommon-dev
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Build Release Binary
+        run: cargo build --release
+
+      - name: Package Assets and Binary into Zip
+        run: |
+          rm -rf eyegore_release
+          mkdir -p eyegore_release
+          
+          cp -f target/release/rre eyegore_release/
+          
+          if [ -d "assets" ]; then
+              cp -r assets eyegore_release/assets
+          else
+              echo "::warning::Warning: 'assets' folder not found on root directory."
+          fi
+          
+          cd eyegore_release
+          zip -r ../eyegore-linux.zip ./*
+          cd ..
+        shell: bash
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-build
+          path: eyegore-linux.zip
+
+  publish-release:
+    name: Publish Release
+    needs: [ build-windows, build-linux ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Windows Build
+        uses: actions/download-artifact@v8
+        with:
+          name: windows-build
+
+      - name: Download Linux Build
+        uses: actions/download-artifact@v8
+        with:
+          name: linux-build
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: eyegore-windows.zip
+          files: |
+            eyegore-windows.zip
+            eyegore-linux.zip
           generate_release_notes: true
