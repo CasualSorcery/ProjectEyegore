@@ -33,8 +33,10 @@ pub fn load_texture(filepath: &str) -> Vec<u32> {
 }
 
 // create a window using the params specifications
-pub fn create_window(options: &GameConfig, window_options: WindowOptions) -> Window {
+pub fn create_window(options: &GameConfig) -> Window {
     // creates a window object using minifb
+    let mut window_options = WindowOptions::default();
+
     let mut window: Window = Window::new(
         &options.name, // window name only accepts &str
         options.scr_width,

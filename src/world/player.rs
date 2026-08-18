@@ -27,12 +27,13 @@ impl Inventory {
                         ammo: existing_ammo,
                         ..
                     } = item
-                        && *existing_name == name {
-                            // if is the same Weapon, only add the ammo
-                            *existing_ammo += ammo;
-                            return;
-                        }
+                        && *existing_name == name
+                    {
+                        // if is the same Weapon, only add the ammo
+                        *existing_ammo += ammo;
+                        return;
                     }
+                }
                 // else just add the Weapon to the inventory
                 self.stashed_items
                     .push(Items::Weapon { name, damage, ammo });

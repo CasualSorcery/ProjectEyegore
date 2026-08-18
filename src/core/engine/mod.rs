@@ -1,13 +1,13 @@
 pub mod render;
 pub mod update;
 
-use std::time::Instant;
-use minifb::{Key, Window, WindowOptions};
-use crate::core::config::{load_config, GameConfig};
+use crate::core::config::{GameConfig, load_config};
 use crate::core::input::InputState;
 use crate::utils::helpers::{create_window, load_texture};
 use crate::world::map::CartesianPos;
 use crate::world::player::Player;
+use minifb::{Key, Window, WindowOptions};
+use std::time::Instant;
 
 // main Engine struct
 
@@ -38,7 +38,6 @@ pub struct Engine {
     debug_string: String,
 }
 impl Engine {
-
     // Engine constructor
 
     /// Engine's constructor
@@ -52,7 +51,7 @@ impl Engine {
     pub fn new(filepath: &str) -> Self {
         let config = load_config(filepath);
 
-        let mut window = create_window(&config, WindowOptions::default());
+        let mut window = create_window(&config);
 
         window.set_cursor_visibility(false);
 
