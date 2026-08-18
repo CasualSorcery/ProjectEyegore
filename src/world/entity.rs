@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use crate::world::map::CartesianPos;
 use serde::Deserialize;
 
@@ -37,6 +39,7 @@ pub struct Entity {
     pub entity_type: EntityType,
 }
 impl Entity {
+    //noinspection RsExternalLinter
     pub fn new_prop(x: f64, y: f64, texture: usize) -> Self {
         Self {
             // create new prop entity

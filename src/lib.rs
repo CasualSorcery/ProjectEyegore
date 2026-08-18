@@ -13,8 +13,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 /// * `config_path` - A string slice pointing to the `.ron` config file desired
 pub fn run_game(config_path: &str) {
     // create the event loop
-    let event_loop = EventLoop::new()
-        .expect("Failed to create event loop");
+    let event_loop = EventLoop::new().expect("Failed to create event loop");
 
     // set to Poll so the game loop runs constantly without waiting for key presses
     event_loop.set_control_flow(ControlFlow::Poll);

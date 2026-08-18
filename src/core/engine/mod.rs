@@ -1,7 +1,7 @@
 pub mod render;
 pub mod update;
 
-use crate::core::config::{load_config, GameConfig};
+use crate::core::config::{GameConfig, load_config};
 use crate::core::input::InputState;
 use crate::utils::helpers::load_texture;
 use crate::world::map::CartesianPos;
@@ -117,7 +117,8 @@ impl ApplicationHandler for Engine {
 
             // fullscreen check
             if self.config.fullscreen {
-                window_attributes = window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
+                window_attributes =
+                    window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
 
             // wrap the window in rc
@@ -216,10 +217,12 @@ impl ApplicationHandler for Engine {
                     // don't draw if the window is minimized
                     if out_w > 0 && out_h > 0 {
                         // resize the softbuffer surface to match the monitor
-                        surface.resize(
-                            NonZeroU32::new(win_size.width).unwrap(),
-                            NonZeroU32::new(win_size.height).unwrap(),
-                        ).unwrap();
+                        surface
+                            .resize(
+                                NonZeroU32::new(win_size.width).unwrap(),
+                                NonZeroU32::new(win_size.height).unwrap(),
+                            )
+                            .unwrap();
 
                         let mut screen_buffer = surface.buffer_mut().unwrap();
 
@@ -266,7 +269,6 @@ impl ApplicationHandler for Engine {
                                     win.set_fullscreen(Some(Fullscreen::Borderless(None)));
                                 } else {
                                     win.set_fullscreen(None); // None = Windowed
-
                                 }
                             }
                         }
