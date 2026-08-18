@@ -3,6 +3,7 @@ GameConfig(
     scr_width: 640,
     scr_height: 480,
     target_fps: 60,
+    fullscreen: true,
     levels: [
         Level(
             name: "E1M1 - The Beginning",

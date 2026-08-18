@@ -1,11 +1,10 @@
-use std::time::Instant;
-use minifb::{Key, KeyRepeat, MouseButton, MouseMode};
-use crate::utils::helpers::{load_texture};
-use crate::world::map::CartesianPos;
 use super::Engine;
+use crate::utils::helpers::load_texture;
+use crate::world::map::CartesianPos;
+use minifb::{Key, KeyRepeat, MouseButton, MouseMode};
+use std::time::Instant;
 
 impl Engine {
-
     // helper function, gets the tile according to the coordinates
 
     /// Gets a single, specific tile according to the provided coordinates in the current level.
@@ -143,10 +142,13 @@ impl Engine {
             // if mouse out of the window, snap back to center of the game screen
             if mouse_x < 50.0 || mouse_x > (self.config.scr_width as f32 - 50.0) {
                 let (win_x, win_y) = self.window.get_position();
-                let monitor_center_x = win_x as i32 + (self.config.scr_width as i32 / 2);
-                let monitor_center_y = win_y as i32 + (self.config.scr_height as i32 / 2);
 
-                // unsafe windows sys_call to move the mouse to the center of the game screen
+                // get the physical pixels of the window on the monitor
+                let (win_w, win_h) = self.window.get_size();
+
+                let monitor_center_x = win_x as i32 + (win_w as i32 / 2);
+                let monitor_center_y = win_y as i32 + (win_h as i32 / 2);
+
                 #[cfg(windows)]
                 unsafe {
                     windows_sys::Win32::UI::WindowsAndMessaging::SetCursorPos(
@@ -154,11 +156,8 @@ impl Engine {
                         monitor_center_y,
                     );
                 }
-
-                // reset mouse pos
                 self.input.last_mouse_x = None;
             } else {
-                // if no warp, just save pos
                 self.input.last_mouse_x = Some(mouse_x);
             }
         } else {
@@ -185,10 +184,10 @@ impl Engine {
 
                 // check weapon and consume ammo
                 if let Some(crate::world::player::Items::Weapon {
-                                damage,
-                                ammo,
-                                name: _,
-                            }) = self.player.inventory.get_current_wpn_mut()
+                    damage,
+                    ammo,
+                    name: _,
+                }) = self.player.inventory.get_current_wpn_mut()
                 {
                     if *ammo > 0 {
                         *ammo -= 1;
@@ -207,7 +206,9 @@ impl Engine {
                     let level = &mut self.config.levels[self.current_level_idx];
 
                     for (i, entity) in level.entities.iter().enumerate() {
-                        if let crate::world::entity::EntityType::Enemy { hp, .. } = &entity.entity_type {
+                        if let crate::world::entity::EntityType::Enemy { hp, .. } =
+                            &entity.entity_type
+                        {
                             if *hp <= 0.0 {
                                 continue;
                             }
@@ -238,10 +239,11 @@ impl Engine {
 
                     // 3. Apply Damage to the specific enemy
                     if let Some(idx) = hit_index
-                        && let crate::world::entity::EntityType::Enemy { ref mut hp, .. } = level.entities[idx].entity_type
-                        {
-                            *hp -= damage_to_deal;
-                        }
+                        && let crate::world::entity::EntityType::Enemy { ref mut hp, .. } =
+                            level.entities[idx].entity_type
+                    {
+                        *hp -= damage_to_deal;
+                    }
                 }
             }
         }

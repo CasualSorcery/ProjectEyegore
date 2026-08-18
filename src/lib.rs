@@ -1,5 +1,5 @@
-mod utils;
 mod core;
+mod utils;
 mod world;
 
 use crate::core::engine::Engine;
