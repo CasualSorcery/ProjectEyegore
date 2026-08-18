@@ -6,12 +6,12 @@ pub struct GameConfig {
     pub name: String,
     pub scr_width: usize,
     pub scr_height: usize,
-    pub target_fps: usize,
+    pub fullscreen: bool,
     pub levels: Vec<Level>,
 }
 #[derive(Deserialize)]
 pub struct Level {
-    pub name: String,
+    pub _name: String,
     pub map_width: usize,
     pub map_height: usize,
     pub map: Vec<u8>,
