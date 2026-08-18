@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use crate::world::map::CartesianPos;
 
 /// Types of items enumerator

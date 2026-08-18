@@ -8,7 +8,7 @@ GameConfig(
         Level(
             _name: "E1M1 - The Beginning",
             map_width: 24,
-            map_height: 24,
+            _map_height: 24,
             player_start_x: 22.0,
             player_start_y: 11.5,
             max_fog_distance: 15.0,

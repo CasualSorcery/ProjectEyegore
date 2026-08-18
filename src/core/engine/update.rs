@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use super::Engine;
 use crate::utils::helpers::load_texture;
 use crate::world::map::CartesianPos;

@@ -13,7 +13,7 @@ pub struct GameConfig {
 pub struct Level {
     pub _name: String,
     pub map_width: usize,
-    pub map_height: usize,
+    pub _map_height: usize,
     pub map: Vec<u8>,
     pub player_start_x: f64,
     pub player_start_y: f64,
