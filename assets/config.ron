@@ -1,12 +1,12 @@
 GameConfig(
-    name: "EyeGore v0.1",
+    name: "EyeGore v0.2",
     scr_width: 640,
     scr_height: 480,
     target_fps: 60,
-    fullscreen: true,
+    fullscreen: false,
     levels: [
         Level(
-            name: "E1M1 - The Beginning",
+            _name: "E1M1 - The Beginning",
             map_width: 24,
             map_height: 24,
             player_start_x: 22.0,
