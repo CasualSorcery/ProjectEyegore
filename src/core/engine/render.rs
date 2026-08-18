@@ -276,7 +276,7 @@ impl Engine {
         // step 2 - calculate the inverse camera matrix
         let inv_det = 1.0
             / (self.player.plane.x * self.player.direction.y
-            - self.player.direction.x * self.player.plane.y);
+                - self.player.direction.x * self.player.plane.y);
 
         // step 3 - draw each sprite
         for &(index, _dist) in &self.sprite_buffer {
@@ -393,6 +393,7 @@ impl Engine {
     /// * `start_x` - on-screen x coordinates where the text should start.
     /// * `start_y` - on-screen x coordinates where the text should start.
     /// * `scale` - scale of the drawn text
+    #[inline(always)]
     pub(crate) fn draw_text(
         buffer: &mut [u32],
         scr_w: usize,

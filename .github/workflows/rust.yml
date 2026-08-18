@@ -2,14 +2,14 @@ name: Rust CI (Format, Lint, Test)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "classic", "update-v*" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "classic" ]
 
 jobs:
   check-and-test:
     name: Code Quality Checks
-    runs-on: windows-latest 
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
