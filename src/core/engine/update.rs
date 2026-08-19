@@ -127,10 +127,10 @@ impl Engine {
                 let mut damage_to_deal = 0.0;
 
                 if let Some(crate::world::player::Items::Weapon {
-                                damage,
-                                ammo,
-                                name: _,
-                            }) = self.player.inventory.get_current_wpn_mut()
+                    damage,
+                    ammo,
+                    name: _,
+                }) = self.player.inventory.get_current_wpn_mut()
                     && *ammo > 0
                 {
                     *ammo -= 1;
@@ -177,7 +177,7 @@ impl Engine {
 
                     if let Some(idx) = hit_index
                         && let crate::world::entity::EntityType::Enemy { ref mut hp, .. } =
-                        level.entities[idx].entity_type
+                            level.entities[idx].entity_type
                     {
                         *hp -= damage_to_deal;
                     }
