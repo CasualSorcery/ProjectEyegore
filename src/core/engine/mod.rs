@@ -1,7 +1,7 @@
 pub mod render;
 pub mod update;
 
-use crate::core::config::{load_config, GameConfig};
+use crate::core::config::{GameConfig, load_config};
 use crate::core::input::InputState;
 use crate::utils::helpers::load_texture;
 use crate::world::map::CartesianPos;
@@ -301,18 +301,19 @@ impl ApplicationHandler for Engine {
                         }
                         // H prints to terminal
                         if keycode == KeyCode::KeyH && !kb_event.repeat {
-                            let loaded_entities = &self.config.
-                                levels[self.current_level_idx].entities;
-                            let loaded_textures: &Vec<_> = &self.config.
-                                levels[self.current_level_idx].textures
-                                .iter().enumerate()
+                            let loaded_entities =
+                                &self.config.levels[self.current_level_idx].entities;
+                            let loaded_textures: &Vec<_> = &self.config.levels
+                                [self.current_level_idx]
+                                .textures
+                                .iter()
+                                .enumerate()
                                 .collect();
 
                             println!(
                                 "loaded entities: {:#?}\n\
                                 loaded textures{:#?}",
-                                loaded_entities,
-                                loaded_textures
+                                loaded_entities, loaded_textures
                             );
                         }
 

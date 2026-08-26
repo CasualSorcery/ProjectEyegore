@@ -26,7 +26,9 @@ impl Engine {
         let level = &self.config.levels[self.current_level_idx];
 
         // out of bounds check
-        if x >= level.map_width || y >= level.map_height { return 1; }
+        if x >= level.map_width || y >= level.map_height {
+            return 1;
+        }
 
         // converts 2d array math to the 1d array index
         let index = y * level.map_width + x;
@@ -96,10 +98,12 @@ impl Engine {
             let next_y = self.player.position.y + move_vec_y;
 
             // collision check
-            if next_x >= 0.0 && self.get_tile(next_x as usize, self.player.position.y as usize) == 0 {
+            if next_x >= 0.0 && self.get_tile(next_x as usize, self.player.position.y as usize) == 0
+            {
                 self.player.position.x = next_x;
             }
-            if next_y >= 0.0 && self.get_tile(self.player.position.x as usize, next_y as usize) == 0 {
+            if next_y >= 0.0 && self.get_tile(self.player.position.x as usize, next_y as usize) == 0
+            {
                 self.player.position.y = next_y;
             }
         }
@@ -139,10 +143,10 @@ impl Engine {
                 let mut damage_to_deal = 0.0;
 
                 if let Some(crate::world::player::Items::Weapon {
-                                damage,
-                                ammo,
-                                name: _,
-                            }) = self.player.inventory.get_current_wpn_mut()
+                    damage,
+                    ammo,
+                    name: _,
+                }) = self.player.inventory.get_current_wpn_mut()
                     && *ammo > 0
                 {
                     *ammo -= 1;
@@ -189,7 +193,7 @@ impl Engine {
 
                     if let Some(idx) = hit_index
                         && let crate::world::entity::EntityType::Enemy { ref mut hp, .. } =
-                        level.entities[idx].entity_type
+                            level.entities[idx].entity_type
                     {
                         *hp -= damage_to_deal;
                     }

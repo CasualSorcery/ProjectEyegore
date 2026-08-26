@@ -227,9 +227,12 @@ impl Engine {
                 let mut floor_idx = 0;
                 let mut ceil_idx = 0;
 
-
                 // out of bounds check to prevent crashes if looking outside the map
-                if cell_x >= 0 && cell_x < level.map_width as i32 && cell_y >= 0 && cell_y < level.map_height as i32 {
+                if cell_x >= 0
+                    && cell_x < level.map_width as i32
+                    && cell_y >= 0
+                    && cell_y < level.map_height as i32
+                {
                     let map_index = (cell_y as usize) * level.map_width + (cell_x as usize);
                     floor_idx = level.floor_map[map_index] as usize;
                     ceil_idx = level.ceil_map[map_index] as usize;
@@ -290,7 +293,7 @@ impl Engine {
         // step 2 - calculate the inverse camera matrix
         let inv_det = 1.0
             / (self.player.plane.x * self.player.direction.y
-            - self.player.direction.x * self.player.plane.y);
+                - self.player.direction.x * self.player.plane.y);
 
         // step 3 - draw each sprite
         // - sprite texture rendering
