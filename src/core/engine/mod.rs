@@ -1,11 +1,12 @@
 pub mod render;
 pub mod update;
 
-use crate::core::config::{GameConfig, load_config};
+use crate::core::config::{load_config, GameConfig};
 use crate::core::input::InputState;
 use crate::utils::helpers::load_texture;
 use crate::world::map::CartesianPos;
 use crate::world::player::Player;
+use std::collections::HashMap;
 
 use softbuffer::{Context, Surface};
 use std::num::NonZeroU32;
@@ -42,8 +43,9 @@ pub struct Engine {
     input: InputState,
     /// Public pause game check
     pub is_paused: bool,
-    /// sprite entitie buffer
-    sprite_buffer: Vec<(usize, f64)>,
+    /// sprite entities hashmap buffer
+    /// composed of `usize <sprite_id>, f64 <rel_pos_to_player>`
+    sprite_buffer: HashMap<usize, f64>,
     /// multiuse debug string
     debug_string: String,
     /// used for delta time
@@ -97,7 +99,7 @@ impl Engine {
             player: starting_player,
             input: InputState::new(),
             is_paused: false,
-            sprite_buffer: Vec::new(),
+            sprite_buffer: HashMap::new(),
             debug_string: String::with_capacity(64),
             last_frame_time: Instant::now(),
         }
@@ -296,6 +298,22 @@ impl ApplicationHandler for Engine {
                         // F3 shows debug overlay
                         if keycode == KeyCode::F3 && !kb_event.repeat {
                             self.show_debug = !self.show_debug;
+                        }
+                        // H prints to terminal
+                        if keycode == KeyCode::KeyH && !kb_event.repeat {
+                            let loaded_entities = &self.config.
+                                levels[self.current_level_idx].entities;
+                            let loaded_textures: &Vec<_> = &self.config.
+                                levels[self.current_level_idx].textures
+                                .iter().enumerate()
+                                .collect();
+
+                            println!(
+                                "loaded entities: {:#?}\n\
+                                loaded textures{:#?}",
+                                loaded_entities,
+                                loaded_textures
+                            );
                         }
 
                         // adds to the keys_held hash map
