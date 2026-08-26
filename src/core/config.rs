@@ -8,7 +8,7 @@ pub struct GameConfig {
     pub name: String,
     pub scr_width: usize,
     pub scr_height: usize,
-    pub target_fps: usize,
+    pub target_fps: usize, // TODO: Add FPS clamping
     pub fullscreen: bool,
     pub levels: Vec<Level>,
 }
@@ -26,6 +26,8 @@ pub struct Level {
     pub textures: Vec<String>,
     pub entities: Vec<Entity>,
 }
+// TODO: Ponder Tiled Support for map making
+// TODO: Add dedicated json parser for Tiled MapMaking support.
 pub fn load_config(filepath: &str) -> GameConfig {
     // tries to read the ron file
     let file_content = std::fs::read_to_string(filepath).expect("Failed to read file");
