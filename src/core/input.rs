@@ -2,6 +2,8 @@ use std::collections::HashSet;
 use std::time::Instant;
 use winit::keyboard::PhysicalKey;
 
+// TODO: Add actual in-game configuration
+
 /// Main Mouse and Keyboard input structure
 pub struct InputState {
     /// hash map of all the physical keys readings held at the moment

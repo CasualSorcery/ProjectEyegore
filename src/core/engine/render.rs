@@ -266,6 +266,7 @@ impl Engine {
     /// Renders the sprites by making ray-casting calculations,
     /// writes the result in the Engine's `buffer`, `z_buffer` and `sprites_buffer`.
     pub(crate) fn render_sprites(&mut self) {
+        // TODO: Update the clamping in render_sprites
         // screen size to render
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
