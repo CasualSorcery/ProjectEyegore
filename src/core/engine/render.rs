@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use super::Engine;
 use font8x8::UnicodeFonts;
 use std::fmt::Write;
@@ -176,10 +178,8 @@ impl Engine {
         let scr_w = self.config.scr_width;
         let scr_h = self.config.scr_height;
 
-        // grabbing the level config values
+        // get current level
         let level = &self.config.levels[self.current_level_idx];
-        let floor_idx = level.floor_tex_idx;
-        let ceil_idx = level.ceil_tex_idx;
 
         // fog distance
         let fog_dist = self.config.levels[self.current_level_idx].max_fog_distance;
@@ -224,22 +224,37 @@ impl Engine {
                 floor_x += floor_step_x;
                 floor_y += floor_step_y;
 
+                let mut floor_idx = 0;
+                let mut ceil_idx = 0;
+
+
+                // out of bounds check to prevent crashes if looking outside the map
+                if cell_x >= 0 && cell_x < level.map_width as i32 && cell_y >= 0 && cell_y < level.map_height as i32 {
+                    let map_index = (cell_y as usize) * level.map_width + (cell_x as usize);
+                    floor_idx = level.floor_map[map_index] as usize;
+                    ceil_idx = level.ceil_map[map_index] as usize;
+                }
+
+                // convert id to text array index
+                let floor_tex_num = if floor_idx > 0 { floor_idx - 1 } else { 0 };
+                let ceil_tex_num = if ceil_idx > 0 { ceil_idx - 1 } else { 0 };
+
                 // draw floor
-                let mut floor_color = self.textures[floor_idx][TEX_SIZE * ty + tx];
+                let mut floor_color = self.textures[floor_tex_num][TEX_SIZE * ty + tx];
 
                 // fake lightning
                 floor_color = (floor_color >> 1) & 0x007F7F7F;
 
-                // fog effect
+                // apply fog effect
                 floor_color = Engine::shade_color(floor_color, row_distance, fog_dist);
 
                 self.buffer[y * scr_w + x] = floor_color;
 
                 // draw ceiling
-                let mut ceil_color = self.textures[ceil_idx][TEX_SIZE * ty + tx];
+                let mut ceil_color = self.textures[ceil_tex_num][TEX_SIZE * ty + tx];
                 ceil_color = (ceil_color >> 1) & 0x007F7F7F;
 
-                // fog effect
+                // apply fog effect
                 ceil_color = Engine::shade_color(ceil_color, row_distance, fog_dist);
 
                 // draw symmetrically at the top of the screen
@@ -263,24 +278,23 @@ impl Engine {
         self.sprite_buffer.clear();
 
         // step 1 - Sort sprites by distance (furthest to nearest)
+        // populate the sprite buffer
         for (i, entity) in level.entities.iter().enumerate() {
             let dist = (self.player.position.x - entity.pos.x).powi(2)
                 + (self.player.position.y - entity.pos.y).powi(2);
-            self.sprite_buffer.push((i, dist));
+            self.sprite_buffer.insert(i, dist);
+            // push((i, dist))
         }
-
-        // sort descending
-        self.sprite_buffer
-            .sort_unstable_by(|a, b| b.1.total_cmp(&a.1));
 
         // step 2 - calculate the inverse camera matrix
         let inv_det = 1.0
             / (self.player.plane.x * self.player.direction.y
-                - self.player.direction.x * self.player.plane.y);
+            - self.player.direction.x * self.player.plane.y);
 
         // step 3 - draw each sprite
-        for &(index, _dist) in &self.sprite_buffer {
-            let entity = &level.entities[index];
+        // - sprite texture rendering
+        for index in self.sprite_buffer.keys() {
+            let entity = &level.entities[*index];
 
             // translate sprite position to relative to camera
             let sprite_x = entity.pos.x - self.player.position.x;
@@ -330,9 +344,6 @@ impl Engine {
                 if tex_x < 0 {
                     tex_x = 0;
                 }
-                if tex_x >= TEX_SIZE as isize {
-                    tex_x = TEX_SIZE as isize - 1;
-                }
 
                 let stripe_usize = stripe as usize;
 
@@ -350,16 +361,15 @@ impl Engine {
                         if tex_y < 0 {
                             tex_y = 0;
                         }
-                        if tex_y >= TEX_SIZE as isize {
-                            tex_y = TEX_SIZE as isize - 1;
-                        }
 
                         // safety check: ensure the texture exists
-                        let tex_idx = if entity.texture < self.textures.len() {
-                            entity.texture
-                        } else {
+
+                        let tex_idx = if entity.texture > self.textures.len() {
                             0
+                        } else {
+                            entity.texture - 1
                         };
+
                         let mut color = self.textures[tex_idx]
                             [(TEX_SIZE) * (tex_y as usize) + (tex_x as usize)];
 

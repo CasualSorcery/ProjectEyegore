@@ -39,7 +39,6 @@ pub struct Entity {
     pub entity_type: EntityType,
 }
 impl Entity {
-    //noinspection RsExternalLinter
     pub fn new_prop(x: f64, y: f64, texture: usize) -> Self {
         Self {
             // create new prop entity
@@ -116,15 +115,14 @@ impl Entity {
                             let next_x = self.pos.x + (dx / dist) * move_step;
                             let next_y = self.pos.y + (dy / dist) * move_step;
 
-                            let index_x = (next_x as usize) * map_width + (self.pos.y as usize);
+                            let index_x = (self.pos.y as usize) * map_width + (next_x as usize);
+                            let index_y = (next_y as usize) * map_width + (self.pos.x as usize);
 
-                            // X Collision Check
+                            // collision check
                             if *map.get(index_x).unwrap_or(&1) == 0 {
                                 self.pos.x = next_x;
                             }
 
-                            // Y Collision Check
-                            let index_y = (self.pos.x as usize) * map_width + (next_y as usize);
                             if *map.get(index_y).unwrap_or(&1) == 0 {
                                 self.pos.y = next_y;
                             }
