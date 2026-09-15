@@ -8,7 +8,7 @@ pub struct GameConfig {
     pub name: String,
     pub scr_width: usize,
     pub scr_height: usize,
-    pub target_fps: usize, // TODO: Add FPS clamping
+    pub target_fps: usize,
     pub fullscreen: bool,
     pub levels: Vec<Level>,
 }

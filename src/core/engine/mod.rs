@@ -11,12 +11,12 @@ use std::collections::HashMap;
 use softbuffer::{Context, Surface};
 use std::num::NonZeroU32;
 use std::rc::Rc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, DeviceId, ElementState, WindowEvent};
-use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::{ActiveEventLoop, ControlFlow};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{CursorGrabMode, Fullscreen, Window, WindowId};
 
@@ -49,6 +49,7 @@ pub struct Engine {
     /// multiuse debug string
     debug_string: String,
     /// used for delta time
+    frame_duration: Duration,
     last_frame_time: Instant,
 }
 impl Engine {
@@ -87,6 +88,8 @@ impl Engine {
             CartesianPos { x: 0.0, y: 0.66 },
         );
 
+        let _target_fps = config.target_fps;
+
         Self {
             config,
             window: None,
@@ -101,6 +104,7 @@ impl Engine {
             is_paused: false,
             sprite_buffer: HashMap::new(),
             debug_string: String::with_capacity(64),
+            frame_duration: Duration::from_nanos(1_000_000_000 / _target_fps as u64),
             last_frame_time: Instant::now(),
         }
     }
@@ -164,9 +168,10 @@ impl ApplicationHandler for Engine {
                 }
 
                 // delta time calculation
-                let new_time = Instant::now();
-                let frame_time = new_time.duration_since(self.last_frame_time).as_secs_f64();
-                self.last_frame_time = new_time;
+                let last_frame = Instant::now();
+                let frame_time = last_frame.duration_since(self.last_frame_time).as_secs_f64();
+
+                self.last_frame_time = last_frame;
 
                 // input takes precedent over other events
                 self.handle_input(frame_time);
@@ -341,11 +346,11 @@ impl ApplicationHandler for Engine {
                     let _ = win.set_cursor_grab(CursorGrabMode::None);
                 }
             }
+
             // else any other cases
             _ => {}
         }
     }
-
     // raw input from devices events
     fn device_event(
         &mut self,
@@ -359,6 +364,24 @@ impl ApplicationHandler for Engine {
         {
             self.input.mouse_dx += delta.0;
             self.input.mouse_dy += delta.1;
+        }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        event_loop.set_control_flow(ControlFlow::Poll);
+
+        // FPS Clamping
+        if let Some(window) = &self.window {
+            let now = Instant::now();
+            let time_passed = now.duration_since(self.last_frame_time);
+
+            // if the game is running faster than the target fps, sleep the thread
+            // for the remaining duration
+            if time_passed < self.frame_duration {
+                std::thread::sleep(self.frame_duration - time_passed);
+            }
+
+            window.request_redraw();
         }
     }
 }
