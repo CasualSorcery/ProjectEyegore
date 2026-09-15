@@ -51,8 +51,8 @@ onde você pode baixar a versão mais recente ou qualquer outra versão desejada
 A documentação oficial ainda é um **Trabalho Em Progresso** (WIP), *porém* o código-fonte ~~geralmente~~ é muito bem
 comentado e conciso.
 
-Por enquanto, você também pode perguntar diretamente ao autor original do código sobre o propósito dele.
-~~*Respostas satisfatórias não são garantidas*~~
+Por enquanto, você também pode perguntar diretamente ao autor original do código sobre o propósito dele. ~~*Respostas
+satisfatórias não são garantidas*~~
 
 ## Contribuindo
 

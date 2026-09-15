@@ -9,18 +9,22 @@
 
 # Contributing Guidelines
 
-Thank you for your interest in contributing to our project! Please follow these basic guidelines to ensure a smooth process.
+Thank you for your interest in contributing to our project! Please follow these basic guidelines to ensure a smooth
+process.
 
 ## Reporting Bugs
+
 - Check existing Issues before opening a new one.
 - Use a clear and descriptive title.
 - Provide a step-by-step description to reproduce the bug.
 
 ## Suggesting Enhancements
+
 - Open an Issue explaining the feature you would like to see.
 - Explain why this feature would be useful to the project.
 
 ## Pull Requests
+
 1. Fork the repository.
 2. Create a new branch: `git checkout -b feature/my-awesome-feature`.
 3. Commit your changes: `git commit -m 'Add some feature'`.

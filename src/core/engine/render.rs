@@ -293,7 +293,7 @@ impl Engine {
         // step 2 - calculate the inverse camera matrix
         let inv_det = 1.0
             / (self.player.plane.x * self.player.direction.y
-                - self.player.direction.x * self.player.plane.y);
+            - self.player.direction.x * self.player.plane.y);
 
         // step 3 - draw each sprite
         // - sprite texture rendering
