@@ -3,7 +3,7 @@ mod utils;
 mod world;
 
 use crate::core::engine::Engine;
-use winit::event_loop::{EventLoop};
+use winit::event_loop::EventLoop;
 
 /// Wrapper that sets up the window event loop and game ray-casting logic
 /// as per .ron in the file path
