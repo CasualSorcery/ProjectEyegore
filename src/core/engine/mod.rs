@@ -169,7 +169,9 @@ impl ApplicationHandler for Engine {
 
                 // delta time calculation
                 let last_frame = Instant::now();
-                let frame_time = last_frame.duration_since(self.last_frame_time).as_secs_f64();
+                let frame_time = last_frame
+                    .duration_since(self.last_frame_time)
+                    .as_secs_f64();
 
                 self.last_frame_time = last_frame;
 
