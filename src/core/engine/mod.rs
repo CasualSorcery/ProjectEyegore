@@ -1,7 +1,7 @@
 pub mod render;
 pub mod update;
 
-use crate::core::config::{GameConfig, load_config};
+use crate::core::config::{GameConfig, load_config_from_file};
 use crate::core::input::InputState;
 use crate::utils::helpers::load_texture;
 use crate::world::map::CartesianPos;
@@ -62,7 +62,7 @@ impl Engine {
     /// # Returns
     /// * `Self` - called by other methods.
     pub fn new(filepath: &str) -> Self {
-        let config = load_config(filepath);
+        let config = load_config_from_file(filepath);
 
         // simple check for levels
         if config.levels.is_empty() {

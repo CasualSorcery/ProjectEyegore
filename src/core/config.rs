@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+
+use crate::core::json_parser::load_from_json;
 use crate::world::entity::Entity;
 use serde::Deserialize;
+use std::path::Path;
 
 #[derive(Deserialize)]
 pub struct GameConfig {
@@ -26,9 +29,18 @@ pub struct Level {
     pub textures: Vec<String>,
     pub entities: Vec<Entity>,
 }
-// TODO: Ponder Tiled Support for map making
-// TODO: Add dedicated json parser for Tiled MapMaking support.
-pub fn load_config(filepath: &str) -> GameConfig {
+
+pub fn load_config_from_file(filepath: &str) -> GameConfig {
+    // transforms into Path for the sole usage of .extension()
+    let path = Path::new(filepath);
+
+    match path.extension().and_then(|ext| ext.to_str()) {
+        Some("ron") => load_from_ron(filepath),
+        Some("json") | Some("tmj") => load_from_json(filepath),
+        _ => panic!("Unsupported file extension: {}", filepath),
+    }
+}
+pub fn load_from_ron(filepath: &str) -> GameConfig {
     // tries to read the ron file
     let file_content = std::fs::read_to_string(filepath).expect("Failed to read file");
     // tries to serialize the ron file into the GameConfig Struct
